@@ -4,6 +4,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User'); // adjust path if needed
+const auth = require('../middleware/auth'); // middleware import
 
 // Assuming you already have this (your registration)
 router.post("/register", async (req, res) => {
@@ -82,6 +83,24 @@ router.post('/login', async (req, res) => {
       }
     });
 
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// get current user profile
+router.get('/me', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-passwordHash');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({
+      id: user._id,
+      email: user.email,
+      name: user.name || null,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
