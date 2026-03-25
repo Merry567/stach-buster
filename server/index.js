@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const authRoutes = require("./routes/auth");
+const stashRoutes = require("./routes/stash");
 
 const app = express();
 
@@ -16,7 +17,9 @@ mongoose
   .catch(err => console.error(err));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/stash", stashRoutes);
 
+//health check
 app.get("/", (req, res) => {
   res.send("Stash Buster API running");
 });

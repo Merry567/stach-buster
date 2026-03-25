@@ -1,35 +1,97 @@
-console.log("stash.js file is being loaded!");
-
+// server/routes/stash.js
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth'); // adjust path if your middleware is elsewhere
-const YarnStash = require('../models/YarnStash'); // make sure model exists!
+const YarnStash = require('../models/YarnStash');
+const auth = require('../middleware/auth');
 
-// POST /api/stash - Create new yarn entry
+// ========================
+//  PROTECTED CRUD ROUTES
+// ========================
+
+// POST /api/stash - Add new yarn to stash
 router.post('/', auth, async (req, res) => {
   try {
-    const yarn = new YarnStash({
+    const newYarn = new YarnStash({
       ...req.body,
-      userId: req.user._id  // ← this comes from your auth middleware
+      userId: req.user.id          // Important: use req.user.id (from your JWT payload)
     });
-    await yarn.save();
-    res.status(201).json(yarn);
+
+    const savedYarn = await newYarn.save();
+    res.status(201).json(savedYarn);
   } catch (err) {
-    console.error(err); // log for debugging
-    res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(400).json({ message: err.message });
   }
 });
 
-// GET /api/stash - List all user's yarn
+// GET /api/stash - Get ALL yarn for the logged-in user
 router.get('/', auth, async (req, res) => {
   try {
-    const yarns = await YarnStash.find({ userId: req.user._id });
-    res.json(yarns);
+    const yarnList = await YarnStash.find({ userId: req.user.id })
+      .sort({ createdAt: -1 });   // newest first
+    res.json(yarnList);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-// ← You can add PUT /:id, DELETE /:id, GET /:id later — same pattern
+// GET /api/stash/:id - Get single yarn entry
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const yarn = await YarnStash.findOne({ 
+      _id: req.params.id, 
+      userId: req.user.id 
+    });
+
+    if (!yarn) {
+      return res.status(404).json({ message: 'Yarn not found' });
+    }
+
+    res.json(yarn);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// PUT /api/stash/:id - Update yarn entry
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const updatedYarn = await YarnStash.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedYarn) {
+      return res.status(404).json({ message: 'Yarn not found' });
+    }
+
+    res.json(updatedYarn);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// DELETE /api/stash/:id - Delete yarn entry
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const deletedYarn = await YarnStash.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.id
+    });
+
+    if (!deletedYarn) {
+      return res.status(404).json({ message: 'Yarn not found' });
+    }
+
+    res.json({ message: 'Yarn deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 module.exports = router;
