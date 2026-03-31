@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -76,9 +76,12 @@ const Login = () => {
           </button>
         </form>
 
-        <p className="text-center mt-6 text-sm text-gray-600">
-          Don't have an account? <span className="text-purple-600 cursor-pointer hover:underline">Register</span>
-        </p>
+        <p className="text-center text-sm text-gray-600 mt-4">
+            Don&apos;t have an account?{' '}
+            <Link to="/register" className="text-blue-600 hover:underline">
+            Register
+            </Link>
+            </p>
       </div>
     </div>
   );

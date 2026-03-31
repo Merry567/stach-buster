@@ -7,39 +7,41 @@ const User = require('../models/User'); // adjust path if needed
 const auth = require('../middleware/auth'); // middleware import
 
 // Assuming you already have this (your registration)
-router.post("/register", async (req, res) => {
+router.post('/register', async (req, res) => {
   try {
     const { email, password, name } = req.body;
 
-    // Basic validation
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email, and password are required' });
     }
 
-    // Check if user already exists
+    const strongPassword = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!strongPassword.test(password)) {
+      return res.status(400).json({
+        message: 'Password must be at least 8 characters and include one uppercase letter and one number',
+      });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(409).json({ message: "User already exists" });
+      return res.status(409).json({ message: 'User already exists' });
     }
 
-    // Hash password
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create user
     const newUser = new User({
       email,
       passwordHash,
-      name
+      name,
     });
 
     await newUser.save();
 
-    res.status(201).json({ message: "User registered successfully" });
-
+    res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
