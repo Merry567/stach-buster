@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
+import Stash from './components/Stash';
+import Patterns from './components/Patterns';
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -24,6 +26,23 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/stash"
+          element={
+           <ProtectedRoute>
+            <Stash />
+          </ProtectedRoute>
+        }
+      />
+
+        <Route
+          path="/patterns"
+          element={
+            <ProtectedRoute>
+              <Patterns />
+            </ProtectedRoute>
+          }
+      />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
