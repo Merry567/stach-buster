@@ -3,34 +3,34 @@ import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const token = localStorage.getItem('token');
-
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
+    const fetchUser = async () => {
       try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+
         const response = await API.get('/auth/me');
         setUser(response.data);
       } catch (err) {
-        console.error('Dashboard load error:', err);
+        console.error('Dashboard error:', err);
+        setError('Your session expired or could not be loaded.');
         localStorage.removeItem('token');
-        setError('Session expired. Please log in again.');
         navigate('/login');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfile();
+    fetchUser();
   }, [navigate]);
 
   const handleLogout = () => {
@@ -40,49 +40,102 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-lg">
-        Loading dashboard...
+      <div style={styles.page}>
+        <div style={styles.card}>
+          <h2>Loading dashboard...</h2>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 px-6 py-10">
-      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-xl p-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Stash Buster Dashboard</h1>
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-          >
-            Logout
-          </button>
-        </div>
+    <div style={styles.page}>
+      <div style={styles.card}>
+        <h1 style={styles.title}>Stash Buster Dashboard</h1>
 
-        {error && (
-          <div className="mb-4 bg-red-100 text-red-700 px-4 py-2 rounded">
-            {error}
+        {error && <p style={styles.error}>{error}</p>}
+
+        {user && (
+          <div style={styles.infoBox}>
+            <p><strong>Welcome:</strong> {user.name || 'User'}</p>
+            <p><strong>Email:</strong> {user.email}</p>
           </div>
         )}
 
-        <div className="space-y-4">
-          <div className="p-4 border rounded-lg">
-            <h2 className="text-xl font-semibold mb-2">Welcome</h2>
-            <p><strong>Name:</strong> {user?.name || 'No name set'}</p>
-            <p><strong>Email:</strong> {user?.email}</p>
-            <p><strong>User ID:</strong> {user?.id}</p>
-          </div>
+        <div style={styles.buttonGroup}>
+          <button style={styles.button} onClick={() => navigate('/stash')}>
+            My Yarn Stash
+          </button>
 
-          <div className="p-4 border rounded-lg">
-            <h2 className="text-xl font-semibold mb-2">Coming Next</h2>
-            <p>Yarn stash overview</p>
-            <p>Pattern library</p>
-            <p>Project recommendations</p>
-          </div>
+          <button style={styles.button} onClick={() => navigate('/patterns')}>
+            My Patterns
+          </button>
+
+          <button style={styles.logoutButton} onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </div>
     </div>
   );
+};
+
+const styles = {
+  page: {
+    minHeight: '100vh',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f6f3ff',
+    padding: '20px',
+  },
+  card: {
+    backgroundColor: '#ffffff',
+    padding: '32px',
+    borderRadius: '14px',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+    width: '100%',
+    maxWidth: '500px',
+    textAlign: 'center',
+  },
+  title: {
+    marginBottom: '20px',
+    color: '#4b2e83',
+  },
+  infoBox: {
+    textAlign: 'left',
+    marginBottom: '24px',
+    padding: '16px',
+    backgroundColor: '#f3ecff',
+    borderRadius: '10px',
+  },
+  buttonGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  button: {
+    padding: '12px',
+    fontSize: '16px',
+    border: 'none',
+    borderRadius: '8px',
+    backgroundColor: '#7c5cff',
+    color: 'white',
+    cursor: 'pointer',
+  },
+  logoutButton: {
+    padding: '12px',
+    fontSize: '16px',
+    border: 'none',
+    borderRadius: '8px',
+    backgroundColor: '#d9534f',
+    color: 'white',
+    cursor: 'pointer',
+  },
+  error: {
+    color: 'red',
+    marginBottom: '16px',
+  },
 };
 
 export default Dashboard;
