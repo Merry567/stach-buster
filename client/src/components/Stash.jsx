@@ -2,10 +2,21 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 
+const weightOptions = [
+  '0 - Lace',
+  '1 - Super Fine',
+  '2 - Fine',
+  '3 - Light',
+  '4 - Medium',
+  '5 - Bulky',
+  '6 - Super Bulky',
+  '7 - Jumbo',
+];
+
 const emptyForm = {
   brand: '',
   fiberContent: '',
-  weight: 'worsted',
+  weight: '4 - Medium',
   color: '',
   grams: '',
   yardage: '',
@@ -13,18 +24,6 @@ const emptyForm = {
   quantity: 1,
   notes: '',
 };
-
-const weightOptions = [
-  'lace',
-  'fingering',
-  'sport',
-  'dk',
-  'worsted',
-  'aran',
-  'bulky',
-  'super-bulky',
-  'other',
-];
 
 const Stash = () => {
   const navigate = useNavigate();
@@ -68,11 +67,10 @@ const Stash = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setForm((prev) => ({
       ...prev,
-      [name]: name === 'grams' || name === 'yardage' || name === 'quantity'
-        ? value
-        : value,
+      [name]: value,
     }));
   };
 
@@ -86,7 +84,7 @@ const Stash = () => {
     setForm({
       brand: item.brand || '',
       fiberContent: item.fiberContent || '',
-      weight: item.weight || 'worsted',
+      weight: item.weight || '4 - Medium',
       color: item.color || '',
       grams: item.grams ?? '',
       yardage: item.yardage ?? '',
@@ -94,6 +92,7 @@ const Stash = () => {
       quantity: item.quantity ?? 1,
       notes: item.notes || '',
     });
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -104,7 +103,10 @@ const Stash = () => {
     try {
       await API.delete(`/stash/${id}`);
       setStash((prev) => prev.filter((item) => item._id !== id));
-      if (editingId === id) resetForm();
+
+      if (editingId === id) {
+        resetForm();
+      }
     } catch (err) {
       console.error('Error deleting yarn:', err);
       setError('Could not delete yarn entry.');
@@ -142,7 +144,7 @@ const Stash = () => {
       resetForm();
     } catch (err) {
       console.error('Error saving yarn:', err);
-      setError(err.response?.data?.message || 'Could not save yarn entry.');
+      setError(err.response?.data?.message || err.response?.data?.error || 'Could not save yarn entry.');
     } finally {
       setSaving(false);
     }
@@ -217,7 +219,7 @@ const Stash = () => {
               value={form.grams}
               onChange={handleChange}
               min="0"
-              step="0.01" //accpes grams into the hundreths place
+              step="0.01"
               required
               style={styles.input}
             />

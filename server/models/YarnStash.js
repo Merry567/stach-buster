@@ -24,12 +24,17 @@ const yarnStashSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: [
-      'lace', 'fingering', 'sport', 'dk', 'worsted', 
-      'aran', 'bulky', 'super-bulky', 'other'
-    ],
-    trim: true,
-    lowercase: true
-  },
+      '0 - Lace',
+      '1 - Super Fine',
+      '2 - Fine',
+      '3 - Light',
+      '4 - Medium',
+      '5 - Bulky',
+      '6 - Super Bulky',
+      '7 - Jumbo'
+  ],
+  trim: true
+},
 
   color: {
     type: String,

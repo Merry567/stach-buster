@@ -2,6 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 
+const yarnWeightOptions = [
+  '0 - Lace',
+  '1 - Super Fine',
+  '2 - Fine',
+  '3 - Light',
+  '4 - Medium',
+  '5 - Bulky',
+  '6 - Super Bulky',
+  '7 - Jumbo',
+];
+
 const emptyMaterial = {
   yarnWeight: '',
   fiberContent: '',
@@ -19,6 +30,7 @@ const emptyForm = {
   tags: '',
   isPublic: false,
   coverImage: '',
+  patternFile: null,
 };
 
 const typeOptions = ['knit', 'crochet', 'both'];
@@ -64,16 +76,14 @@ const Patterns = () => {
         item.skillLevel,
         item.notes,
         ...(Array.isArray(item.tags) ? item.tags : []),
-        ...(
-          Array.isArray(item.materials)
-            ? item.materials.flatMap((mat) => [
-                mat?.yarnWeight,
-                mat?.fiberContent,
-                mat?.yardage?.toString(),
-                mat?.quantity?.toString(),
-              ])
-            : []
-        ),
+        ...(Array.isArray(item.materials)
+          ? item.materials.flatMap((mat) => [
+              mat?.yarnWeight,
+              mat?.fiberContent,
+              mat?.yardage?.toString(),
+              mat?.quantity?.toString(),
+            ])
+          : []),
       ]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(q))
@@ -86,6 +96,15 @@ const Patterns = () => {
     setForm((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+
+    setForm((prev) => ({
+      ...prev,
+      patternFile: file,
     }));
   };
 
@@ -152,6 +171,7 @@ const Patterns = () => {
       tags: Array.isArray(item.tags) ? item.tags.join(', ') : '',
       isPublic: item.isPublic || false,
       coverImage: item.coverImage || '',
+      patternFile: null,
     });
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -194,39 +214,79 @@ const Patterns = () => {
           mat.quantity !== undefined
       );
 
-    const payload = {
-      name: form.name.trim(),
-      type: form.type,
-      skillLevel: form.skillLevel,
-      estTime: form.estTime === '' ? undefined : Number(form.estTime),
-      materials: cleanedMaterials,
-      notes: form.notes.trim(),
-      tags: form.tags
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean),
-      isPublic: form.isPublic,
-      coverImage: form.coverImage.trim(),
-    };
-
     try {
       if (editingId) {
+        const payload = {
+          name: form.name.trim(),
+          type: form.type,
+          skillLevel: form.skillLevel,
+          estTime: form.estTime === '' ? undefined : Number(form.estTime),
+          materials: cleanedMaterials,
+          notes: form.notes.trim(),
+          tags: form.tags
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean),
+          isPublic: form.isPublic,
+          coverImage: form.coverImage.trim(),
+        };
+
         const response = await API.put(`/patterns/${editingId}`, payload);
         setPatterns((prev) =>
           prev.map((item) => (item._id === editingId ? response.data : item))
         );
       } else {
-        const response = await API.post('/patterns', payload);
+        const formData = new FormData();
+
+        formData.append('name', form.name.trim());
+        formData.append('type', form.type);
+        formData.append('skillLevel', form.skillLevel);
+
+        if (form.estTime !== '') {
+          formData.append('estTime', form.estTime);
+        }
+
+        formData.append('materials', JSON.stringify(cleanedMaterials));
+        formData.append('notes', form.notes.trim());
+        formData.append(
+          'tags',
+          JSON.stringify(
+            form.tags
+              .split(',')
+              .map((item) => item.trim())
+              .filter(Boolean)
+          )
+        );
+        formData.append('isPublic', form.isPublic.toString());
+        formData.append('coverImage', form.coverImage.trim());
+
+        if (form.patternFile) {
+          formData.append('patternFile', form.patternFile);
+        }
+
+        const response = await API.post('/patterns', formData);
         setPatterns((prev) => [response.data, ...prev]);
       }
 
       resetForm();
     } catch (err) {
       console.error('Error saving pattern:', err);
-      setError(err.response?.data?.message || 'Could not save pattern.');
+      setError(
+        err.response?.data?.error ||
+          err.response?.data?.message ||
+          'Could not save pattern.'
+      );
     } finally {
       setSaving(false);
     }
+  };
+
+  const getFileUrl = (filePath) => {
+    if (!filePath) return '';
+    if (filePath.startsWith('http')) return filePath;
+
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    return `http://localhost:5000/${normalizedPath}`;
   };
 
   return (
@@ -296,20 +356,39 @@ const Patterns = () => {
               style={styles.input}
             />
 
+            <div>
+              <label style={styles.fileLabel}>Upload Pattern PDF</label>
+              <input
+                type="file"
+                name="patternFile"
+                accept=".pdf"
+                onChange={handleFileChange}
+                style={styles.input}
+              />
+              {form.patternFile && (
+                <p style={styles.fileName}>Selected file: {form.patternFile.name}</p>
+              )}
+            </div>
+
             <div style={styles.materialsBox}>
               <h3 style={styles.subheading}>Materials Needed</h3>
 
               {form.materials.map((material, index) => (
                 <div key={index} style={styles.materialCard}>
-                  <input
-                    type="text"
-                    placeholder="Yarn Weight"
+                  <select
                     value={material.yarnWeight}
                     onChange={(e) =>
                       handleMaterialChange(index, 'yarnWeight', e.target.value)
                     }
                     style={styles.input}
-                  />
+                  >
+                    <option value="">Select Yarn Weight</option>
+                    {yarnWeightOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
 
                   <input
                     type="text"
@@ -463,6 +542,19 @@ const Patterns = () => {
                         style={styles.image}
                       />
                     )}
+
+                    {item.patternFile && (
+                      <p style={styles.fileLinkRow}>
+                        <strong>Pattern PDF:</strong>{' '}
+                        <a
+                          href={getFileUrl(item.patternFile)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          View PDF
+                        </a>
+                      </p>
+                    )}
                   </div>
 
                   <div style={styles.itemButtons}>
@@ -552,6 +644,20 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     fontSize: '15px',
+  },
+  fileLabel: {
+    display: 'block',
+    marginBottom: '8px',
+    fontWeight: '600',
+    color: '#4b2e83',
+  },
+  fileName: {
+    marginTop: '8px',
+    fontSize: '14px',
+    color: '#555',
+  },
+  fileLinkRow: {
+    marginTop: '12px',
   },
   materialsBox: {
     border: '1px solid #ddd',

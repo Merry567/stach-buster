@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Pattern = require('../models/Pattern'); // We'll create this model next
 const auth = require('../middleware/auth');   // Your existing JWT middleware
+const upload = require('../middleware/upload');
 
 // ========================
 // Protected CRUD Routes for Patterns
@@ -10,21 +11,30 @@ const auth = require('../middleware/auth');   // Your existing JWT middleware
 
 // @route   POST /api/patterns
 // @desc    Create a new pattern
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, upload.single('patternFile'), async (req, res) => {
   try {
+    // ✅ ADD THIS BLOCK RIGHT HERE
+    if (req.body.materials && typeof req.body.materials === 'string') {
+      req.body.materials = JSON.parse(req.body.materials);
+    }
+
+    if (req.body.tags && typeof req.body.tags === 'string') {
+      req.body.tags = JSON.parse(req.body.tags);
+    }
+
+    if (req.body.isPublic !== undefined) {
+      req.body.isPublic = req.body.isPublic === 'true' || req.body.isPublic === true;
+    }
     const pattern = new Pattern({
       ...req.body,
-      userId: req.user.id   // Important: Attach the authenticated user's ID
+      userId: req.user.id,
+      patternFile: req.file ? req.file.path : null
     });
 
-    const savedPattern = await pattern.save();
-    res.status(201).json({
-      message: 'Pattern created successfully',
-      pattern: savedPattern
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ message: 'Error creating pattern', error: error.message });
+    await pattern.save();
+    res.json(pattern);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
