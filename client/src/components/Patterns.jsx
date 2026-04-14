@@ -247,32 +247,45 @@ const Patterns = () => {
 
     try {
       if (editingId) {
-        const payload = {
-          name: form.name.trim(),
-          type: form.type,
-          skillLevel: form.skillLevel,
-          estTime: form.estTime === '' ? undefined : Number(form.estTime),
-          materials: cleanedMaterials,
-          notes: form.notes.trim(),
-          tags: form.tags
+       const formData = new FormData();
+       formData.append('name', form.name.trim());
+        formData.append('type', form.type);
+        formData.append('skillLevel', form.skillLevel);
+        
+        if (form.estTime !== '') {
+          formData.append('estTime', form.estTime);
+        }
+
+        formData.append('materials', JSON.stringify(cleanedMaterials));
+        formData.append('notes', form.notes.trim());
+        formData.append(
+          'tags',
+          JSON.stringify(
+            form.tags
             .split(',')
             .map((item) => item.trim())
-            .filter(Boolean),
-          isPublic: form.isPublic,
-          coverImage: form.coverImage.trim(),
-        };
-
-        const response = await API.put(`/patterns/${editingId}`, payload);
-
+            .filter(Boolean)
+          )
+        );
+        
+        formData.append('isPublic', form.isPublic.toString());
+        formData.append('coverImage', form.coverImage.trim());
+        
+        if (form.patternFile) {
+          formData.append('patternFile', form.patternFile);
+        }
+        
+        const response = await API.put(`/patterns/${editingId}`, formData);
+        
         setPatterns((prev) =>
           prev.map((item) => (item._id === editingId ? response.data : item))
-        );
-
-        setMatchResults((prev) => {
-          const updated = { ...prev };
-          delete updated[editingId];
-          return updated;
-        });
+      );
+      
+      setMatchResults((prev) => {
+        const updated = { ...prev };
+        delete updated[editingId];
+        return updated;
+      });
       } else {
         const formData = new FormData();
         formData.append('name', form.name.trim());
@@ -318,13 +331,22 @@ const Patterns = () => {
     }
   };
 
-  const getFileUrl = (filePath) => {
-    if (!filePath) return '';
-    if (filePath.startsWith('http')) return filePath;
+  const handleViewPdf = async (fileId) => {
+  try {
+    const response = await API.get(`/patterns/file/${fileId}`, {
+      responseType: 'blob',
+    });
 
-    const normalizedPath = filePath.replace(/\\/g, '/');
-    return `http://localhost:5000/${normalizedPath}`;
-  };
+    const fileURL = window.URL.createObjectURL(
+      new Blob([response.data], { type: 'application/pdf' })
+    );
+
+    window.open(fileURL, '_blank');
+  } catch (err) {
+    console.error('Error opening PDF:', err);
+    setError('Could not open PDF.');
+  }
+};
 
   return (
     <div style={styles.page}>
@@ -584,17 +606,17 @@ const Patterns = () => {
                     {item.coverImage && (
                       <img src={item.coverImage} alt={item.name} style={styles.image} />
                     )}
-
+                    
                     {item.patternFileId && (
                       <p style={styles.fileLinkRow}>
                         <strong>Pattern PDF:</strong>{" "}
-                        <a
-                        href={`http://localhost:5000/api/patterns/file/${item.patternFileId}`}
-                        target="_blank"
-                        rel="noreferrer"
+                        <button
+                        type="button"
+                        style={styles.linkButton}
+                        onClick={() => handleViewPdf(item.patternFileId)}
                         >
                           {item.patternFileName || "View PDF"}
-                          </a>
+                          </button>
                           </p>
                         )}
 
@@ -671,6 +693,7 @@ const Patterns = () => {
                       style={styles.deleteButton}
                       onClick={() => handleDelete(item._id)}
                     >
+                      
                       Delete
                     </button>
                   </div>
@@ -924,6 +947,15 @@ const styles = {
     color: '#b00020',
     marginBottom: '16px',
   },
+  linkButton: {
+  background: 'none',
+  border: 'none',
+  color: '#5b3cc4',
+  textDecoration: 'underline',
+  cursor: 'pointer',
+  padding: 0,
+  fontSize: '14px',
+},
 };
 
 export default Patterns;
