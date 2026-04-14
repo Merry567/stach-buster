@@ -47,6 +47,9 @@ const Patterns = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const [matchResults, setMatchResults] = useState({});
+  const [matchingId, setMatchingId] = useState(null);
+
   useEffect(() => {
     fetchPatterns();
   }, []);
@@ -153,6 +156,7 @@ const Patterns = () => {
 
   const handleEdit = (item) => {
     setEditingId(item._id);
+
     setForm({
       name: item.name || '',
       type: item.type || 'knit',
@@ -185,12 +189,39 @@ const Patterns = () => {
       await API.delete(`/patterns/${id}`);
       setPatterns((prev) => prev.filter((item) => item._id !== id));
 
+      setMatchResults((prev) => {
+        const updated = { ...prev };
+        delete updated[id];
+        return updated;
+      });
+
       if (editingId === id) {
         resetForm();
       }
     } catch (err) {
       console.error('Error deleting pattern:', err);
       setError('Could not delete pattern.');
+    }
+  };
+
+  const handleFindMatches = async (patternId) => {
+    try {
+      setError('');
+      setMatchingId(patternId);
+
+      const response = await API.get(`/patterns/${patternId}/matches`);
+
+      setMatchResults((prev) => ({
+        ...prev,
+        [patternId]: response.data,
+      }));
+    } catch (err) {
+      console.error('Error finding matches:', err);
+      setError(
+        err.response?.data?.message || 'Could not generate yarn matches.'
+      );
+    } finally {
+      setMatchingId(null);
     }
   };
 
@@ -232,12 +263,18 @@ const Patterns = () => {
         };
 
         const response = await API.put(`/patterns/${editingId}`, payload);
+
         setPatterns((prev) =>
           prev.map((item) => (item._id === editingId ? response.data : item))
         );
+
+        setMatchResults((prev) => {
+          const updated = { ...prev };
+          delete updated[editingId];
+          return updated;
+        });
       } else {
         const formData = new FormData();
-
         formData.append('name', form.name.trim());
         formData.append('type', form.type);
         formData.append('skillLevel', form.skillLevel);
@@ -294,7 +331,11 @@ const Patterns = () => {
       <div style={styles.container}>
         <div style={styles.topBar}>
           <h1 style={styles.title}>My Patterns</h1>
-          <button style={styles.secondaryButton} onClick={() => navigate('/dashboard')}>
+          <button
+            type="button"
+            style={styles.secondaryButton}
+            onClick={() => navigate('/dashboard')}
+          >
             Back to Dashboard
           </button>
         </div>
@@ -310,18 +351,17 @@ const Patterns = () => {
             <input
               type="text"
               name="name"
-              placeholder="Pattern Name"
+              placeholder="Pattern name"
               value={form.name}
               onChange={handleChange}
-              required
               style={styles.input}
+              required
             />
 
             <select
               name="type"
               value={form.type}
               onChange={handleChange}
-              required
               style={styles.input}
             >
               {typeOptions.map((type) => (
@@ -335,7 +375,6 @@ const Patterns = () => {
               name="skillLevel"
               value={form.skillLevel}
               onChange={handleChange}
-              required
               style={styles.input}
             >
               {skillOptions.map((level) => (
@@ -348,11 +387,19 @@ const Patterns = () => {
             <input
               type="number"
               name="estTime"
-              placeholder="Estimated Time in Hours"
+              placeholder="Estimated time (hours)"
               value={form.estTime}
               onChange={handleChange}
               min="0"
-              step="0.1"
+              style={styles.input}
+            />
+
+            <input
+              type="text"
+              name="coverImage"
+              placeholder="Cover image URL"
+              value={form.coverImage}
+              onChange={handleChange}
               style={styles.input}
             />
 
@@ -360,8 +407,7 @@ const Patterns = () => {
               <label style={styles.fileLabel}>Upload Pattern PDF</label>
               <input
                 type="file"
-                name="patternFile"
-                accept=".pdf"
+                accept="application/pdf"
                 onChange={handleFileChange}
                 style={styles.input}
               />
@@ -392,7 +438,7 @@ const Patterns = () => {
 
                   <input
                     type="text"
-                    placeholder="Fiber Content"
+                    placeholder="Fiber content"
                     value={material.fiberContent}
                     onChange={(e) =>
                       handleMaterialChange(index, 'fiberContent', e.target.value)
@@ -441,6 +487,14 @@ const Patterns = () => {
               </button>
             </div>
 
+            <textarea
+              name="notes"
+              placeholder="Notes"
+              value={form.notes}
+              onChange={handleChange}
+              style={styles.textarea}
+            />
+
             <input
               type="text"
               name="tags"
@@ -448,23 +502,6 @@ const Patterns = () => {
               value={form.tags}
               onChange={handleChange}
               style={styles.input}
-            />
-
-            <input
-              type="text"
-              name="coverImage"
-              placeholder="Cover Image URL (optional)"
-              value={form.coverImage}
-              onChange={handleChange}
-              style={styles.input}
-            />
-
-            <textarea
-              name="notes"
-              placeholder="Notes (optional)"
-              value={form.notes}
-              onChange={handleChange}
-              style={styles.textarea}
             />
 
             <label style={styles.checkboxLabel}>
@@ -479,11 +516,19 @@ const Patterns = () => {
 
             <div style={styles.buttonRow}>
               <button type="submit" style={styles.primaryButton} disabled={saving}>
-                {saving ? 'Saving...' : editingId ? 'Update Pattern' : 'Add Pattern'}
+                {saving
+                  ? 'Saving...'
+                  : editingId
+                  ? 'Update Pattern'
+                  : 'Add Pattern'}
               </button>
 
               {editingId && (
-                <button type="button" style={styles.cancelButton} onClick={resetForm}>
+                <button
+                  type="button"
+                  style={styles.cancelButton}
+                  onClick={resetForm}
+                >
                   Cancel Edit
                 </button>
               )}
@@ -494,6 +539,7 @@ const Patterns = () => {
         <div style={styles.card}>
           <div style={styles.listHeader}>
             <h2 style={styles.sectionTitle}>Saved Patterns</h2>
+
             <input
               type="text"
               placeholder="Search patterns..."
@@ -536,34 +582,91 @@ const Patterns = () => {
                     </div>
 
                     {item.coverImage && (
-                      <img
-                        src={item.coverImage}
-                        alt={item.name}
-                        style={styles.image}
-                      />
+                      <img src={item.coverImage} alt={item.name} style={styles.image} />
                     )}
 
-                    {item.patternFile && (
+                    {item.patternFileId && (
                       <p style={styles.fileLinkRow}>
-                        <strong>Pattern PDF:</strong>{' '}
+                        <strong>Pattern PDF:</strong>{" "}
                         <a
-                          href={getFileUrl(item.patternFile)}
-                          target="_blank"
-                          rel="noreferrer"
+                        href={`http://localhost:5000/api/patterns/file/${item.patternFileId}`}
+                        target="_blank"
+                        rel="noreferrer"
                         >
-                          View PDF
-                        </a>
-                      </p>
+                          {item.patternFileName || "View PDF"}
+                          </a>
+                          </p>
+                        )}
+
+                    {matchResults[item._id] && (
+                      <div style={styles.matchBox}>
+                        <p>
+                          <strong>Overall Match:</strong>{' '}
+                          {matchResults[item._id].overallStatus}
+                        </p>
+
+                        {matchResults[item._id].materialMatches?.map((entry) => (
+                          <div key={entry.materialIndex} style={styles.matchSection}>
+                            <p>
+                              <strong>Material {entry.materialIndex + 1}:</strong>{' '}
+                              {entry.material?.yarnWeight || 'Any weight'} /{' '}
+                              {entry.material?.fiberContent || 'Any fiber'} /{' '}
+                              {entry.material?.yardage ?? 0} yards / Qty:{' '}
+                              {entry.material?.quantity ?? '—'}
+                            </p>
+
+                            <p><strong>Status:</strong> {entry.status}</p>
+
+                            {entry.matches?.length ? (
+                              entry.matches.map((match) => (
+                                <div key={match.stashId} style={styles.matchItem}>
+                                  <p>
+                                    <strong>{match.brand}</strong> — {match.color}
+                                  </p>
+                                  <p><strong>Weight:</strong> {match.weight || '—'}</p>
+                                  <p><strong>Fiber:</strong> {match.fiberContent || '—'}</p>
+                                  <p>
+                                    <strong>Available Yardage:</strong>{' '}
+                                    {match.stashYardageTotal ?? '—'}
+                                  </p>
+                                  <p>
+                                    <strong>Required Yardage:</strong>{' '}
+                                    {match.requiredYardage ?? '—'}
+                                  </p>
+                                  <p><strong>Score:</strong> {match.score ?? 0}</p>
+                                  <p>
+                                    <strong>Why:</strong>{' '}
+                                    {match.reasons?.length
+                                      ? match.reasons.join(', ')
+                                      : 'No details'}
+                                  </p>
+                                </div>
+                              ))
+                            ) : (
+                              <p>No stash yarn matched this material.</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
 
                   <div style={styles.itemButtons}>
+                    <button
+                      style={styles.secondaryButton}
+                      onClick={() => handleFindMatches(item._id)}
+                      disabled={matchingId === item._id}
+                    >
+                      {matchingId === item._id ? 'Matching...' : 'Find Yarn Matches'}
+                    </button>
+
                     <button
                       style={styles.editButton}
                       onClick={() => handleEdit(item)}
                     >
                       Edit
                     </button>
+
                     <button
                       style={styles.deleteButton}
                       onClick={() => handleDelete(item._id)}
@@ -762,7 +865,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
-    minWidth: '100px',
+    minWidth: '150px',
   },
   editButton: {
     padding: '10px',
@@ -797,6 +900,25 @@ const styles = {
   inlineText: {
     display: 'inline',
     marginLeft: '6px',
+  },
+  matchBox: {
+    marginTop: '16px',
+    padding: '16px',
+    borderRadius: '10px',
+    backgroundColor: '#f4f0ff',
+    border: '1px solid #ddd',
+  },
+  matchSection: {
+    marginTop: '12px',
+    paddingTop: '12px',
+    borderTop: '1px solid #ddd',
+  },
+  matchItem: {
+    marginTop: '10px',
+    padding: '10px',
+    borderRadius: '8px',
+    backgroundColor: '#fff',
+    border: '1px solid #e3d8ff',
   },
   error: {
     color: '#b00020',
