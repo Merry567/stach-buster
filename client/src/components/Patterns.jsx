@@ -15,7 +15,6 @@ const yarnWeightOptions = [
 
 const emptyMaterial = {
   yarnWeight: '',
-  fiberContent: '',
   yardage: '',
   quantity: '',
 };
@@ -24,12 +23,10 @@ const emptyForm = {
   name: '',
   type: 'knit',
   skillLevel: 'intermediate',
-  estTime: '',
   materials: [{ ...emptyMaterial }],
   notes: '',
   tags: '',
   isPublic: false,
-  coverImage: '',
   patternFile: null,
 };
 
@@ -82,7 +79,6 @@ const Patterns = () => {
         ...(Array.isArray(item.materials)
           ? item.materials.flatMap((mat) => [
               mat?.yarnWeight,
-              mat?.fiberContent,
               mat?.yardage?.toString(),
               mat?.quantity?.toString(),
             ])
@@ -161,12 +157,10 @@ const Patterns = () => {
       name: item.name || '',
       type: item.type || 'knit',
       skillLevel: item.skillLevel || 'intermediate',
-      estTime: item.estTime ?? '',
       materials:
         Array.isArray(item.materials) && item.materials.length > 0
           ? item.materials.map((mat) => ({
               yarnWeight: mat.yarnWeight || '',
-              fiberContent: mat.fiberContent || '',
               yardage: mat.yardage ?? '',
               quantity: mat.quantity ?? '',
             }))
@@ -174,7 +168,6 @@ const Patterns = () => {
       notes: item.notes || '',
       tags: Array.isArray(item.tags) ? item.tags.join(', ') : '',
       isPublic: item.isPublic || false,
-      coverImage: item.coverImage || '',
       patternFile: null,
     });
 
@@ -233,14 +226,12 @@ const Patterns = () => {
     const cleanedMaterials = form.materials
       .map((mat) => ({
         yarnWeight: mat.yarnWeight.trim(),
-        fiberContent: mat.fiberContent.trim(),
         yardage: mat.yardage === '' ? undefined : Number(mat.yardage),
         quantity: mat.quantity === '' ? undefined : Number(mat.quantity),
       }))
       .filter(
         (mat) =>
           mat.yarnWeight ||
-          mat.fiberContent ||
           mat.yardage !== undefined ||
           mat.quantity !== undefined
       );
@@ -251,10 +242,6 @@ const Patterns = () => {
        formData.append('name', form.name.trim());
         formData.append('type', form.type);
         formData.append('skillLevel', form.skillLevel);
-        
-        if (form.estTime !== '') {
-          formData.append('estTime', form.estTime);
-        }
 
         formData.append('materials', JSON.stringify(cleanedMaterials));
         formData.append('notes', form.notes.trim());
@@ -269,7 +256,6 @@ const Patterns = () => {
         );
         
         formData.append('isPublic', form.isPublic.toString());
-        formData.append('coverImage', form.coverImage.trim());
         
         if (form.patternFile) {
           formData.append('patternFile', form.patternFile);
@@ -292,10 +278,6 @@ const Patterns = () => {
         formData.append('type', form.type);
         formData.append('skillLevel', form.skillLevel);
 
-        if (form.estTime !== '') {
-          formData.append('estTime', form.estTime);
-        }
-
         formData.append('materials', JSON.stringify(cleanedMaterials));
         formData.append('notes', form.notes.trim());
         formData.append(
@@ -308,7 +290,6 @@ const Patterns = () => {
           )
         );
         formData.append('isPublic', form.isPublic.toString());
-        formData.append('coverImage', form.coverImage.trim());
 
         if (form.patternFile) {
           formData.append('patternFile', form.patternFile);
@@ -406,24 +387,6 @@ const Patterns = () => {
               ))}
             </select>
 
-            <input
-              type="number"
-              name="estTime"
-              placeholder="Estimated time (hours)"
-              value={form.estTime}
-              onChange={handleChange}
-              min="0"
-              style={styles.input}
-            />
-
-            <input
-              type="text"
-              name="coverImage"
-              placeholder="Cover image URL"
-              value={form.coverImage}
-              onChange={handleChange}
-              style={styles.input}
-            />
 
             <div>
               <label style={styles.fileLabel}>Upload Pattern PDF</label>
@@ -457,16 +420,6 @@ const Patterns = () => {
                       </option>
                     ))}
                   </select>
-
-                  <input
-                    type="text"
-                    placeholder="Fiber content"
-                    value={material.fiberContent}
-                    onChange={(e) =>
-                      handleMaterialChange(index, 'fiberContent', e.target.value)
-                    }
-                    style={styles.input}
-                  />
 
                   <input
                     type="number"
@@ -583,7 +536,6 @@ const Patterns = () => {
                     <h3 style={styles.itemTitle}>{item.name}</h3>
                     <p><strong>Type:</strong> {item.type || '—'}</p>
                     <p><strong>Skill Level:</strong> {item.skillLevel || '—'}</p>
-                    <p><strong>Estimated Time:</strong> {item.estTime ?? '—'} hours</p>
                     <p><strong>Public:</strong> {item.isPublic ? 'Yes' : 'No'}</p>
                     <p><strong>Tags:</strong> {item.tags?.length ? item.tags.join(', ') : '—'}</p>
                     <p><strong>Notes:</strong> {item.notes || '—'}</p>
@@ -594,7 +546,8 @@ const Patterns = () => {
                         <ul style={styles.materialList}>
                           {item.materials.map((mat, idx) => (
                             <li key={idx}>
-                              Weight: {mat.yarnWeight || '—'}, Fiber: {mat.fiberContent || '—'}, Yardage: {mat.yardage ?? '—'}, Quantity: {mat.quantity ?? '—'}
+                              Weight: {mat.yarnWeight || '—'}, 
+                               Yardage: {mat.yardage ?? '—'}, Quantity: {mat.quantity ?? '—'}
                             </li>
                           ))}
                         </ul>
@@ -602,10 +555,6 @@ const Patterns = () => {
                         <p style={styles.inlineText}>—</p>
                       )}
                     </div>
-
-                    {item.coverImage && (
-                      <img src={item.coverImage} alt={item.name} style={styles.image} />
-                    )}
                     
                     {item.patternFileId && (
                       <p style={styles.fileLinkRow}>
@@ -632,7 +581,6 @@ const Patterns = () => {
                             <p>
                               <strong>Material {entry.materialIndex + 1}:</strong>{' '}
                               {entry.material?.yarnWeight || 'Any weight'} /{' '}
-                              {entry.material?.fiberContent || 'Any fiber'} /{' '}
                               {entry.material?.yardage ?? 0} yards / Qty:{' '}
                               {entry.material?.quantity ?? '—'}
                             </p>
@@ -646,7 +594,6 @@ const Patterns = () => {
                                     <strong>{match.brand}</strong> — {match.color}
                                   </p>
                                   <p><strong>Weight:</strong> {match.weight || '—'}</p>
-                                  <p><strong>Fiber:</strong> {match.fiberContent || '—'}</p>
                                   <p>
                                     <strong>Available Yardage:</strong>{' '}
                                     {match.stashYardageTotal ?? '—'}
@@ -905,13 +852,6 @@ const styles = {
     backgroundColor: '#d9534f',
     color: '#fff',
     cursor: 'pointer',
-  },
-  image: {
-    marginTop: '12px',
-    maxWidth: '220px',
-    width: '100%',
-    borderRadius: '10px',
-    border: '1px solid #ddd',
   },
   materialDisplay: {
     marginTop: '10px',
