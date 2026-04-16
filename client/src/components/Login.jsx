@@ -1,18 +1,26 @@
 import { useState } from 'react';
 import API from '../services/api';
 import { Link, useNavigate } from 'react-router-dom';
+import './Login.css';
 
 const Login = () => {
+  // Stores the form inputs
   const [formData, setFormData] = useState({ email: '', password: '' });
+
+  // Stores any error message from login
   const [error, setError] = useState('');
+
+  // Tracks whether the form is currently submitting
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
+  // Updates the form fields as the user types
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Handles login form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -21,11 +29,11 @@ const Login = () => {
     try {
       const response = await API.post('/auth/login', formData);
 
+      // Save token for future authenticated requests
       localStorage.setItem('token', response.data.token);
 
-      alert('Login successful! 🧶');
+      alert('Login successful!');
       navigate('/dashboard');
-
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password');
     } finally {
@@ -34,20 +42,16 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-purple-700">Stash Buster</h1>
-          <p className="text-gray-600 mt-2">Sign in to your yarn stash</p>
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-header">
+          <h1 className="login-title">Stash Buster</h1>
+          <p className="login-subtitle">Sign in to your yarn stash</p>
         </div>
 
-        {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-6 text-sm">
-            {error}
-          </div>
-        )}
+        {error && <div className="login-error">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="login-form">
           <input
             type="email"
             name="email"
@@ -55,8 +59,9 @@ const Login = () => {
             value={formData.email}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-purple-500"
+            className="login-input"
           />
+
           <input
             type="password"
             name="password"
@@ -64,24 +69,24 @@ const Login = () => {
             value={formData.password}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-purple-500"
+            className="login-input"
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-medium disabled:opacity-70"
+            className="login-button"
           >
             {loading ? 'Signing in...' : 'Login'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-600 mt-4">
-            Don&apos;t have an account?{' '}
-            <Link to="/register" className="text-blue-600 hover:underline">
+        <p className="login-footer">
+          Don&apos;t have an account?{' '}
+          <Link to="/register" className="login-link">
             Register
-            </Link>
-            </p>
+          </Link>
+        </p>
       </div>
     </div>
   );

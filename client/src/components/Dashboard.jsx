@@ -51,14 +51,13 @@ const Dashboard = () => {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <h1 style={styles.title}>Stash Buster Dashboard</h1>
+        <h1 style={styles.title}>Stash Buster</h1>
 
         {error && <p style={styles.error}>{error}</p>}
 
         {user && (
           <div style={styles.infoBox}>
-            <p><strong>Welcome:</strong> {user.name || 'User'}</p>
-            <p><strong>Email:</strong> {user.email}</p>
+            <p><strong>Welcome</strong> {user.name || 'User'}</p>
           </div>
         )}
 
@@ -81,16 +80,19 @@ const Dashboard = () => {
 };
 
 const styles = {
+  //background
   page: {
     minHeight: '100vh',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f6f3ff',
+    backgroundColor: '#F5D7E3',
     padding: '20px',
   },
+
+  //box card
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fcf1f5',
     padding: '32px',
     borderRadius: '14px',
     boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
@@ -98,15 +100,19 @@ const styles = {
     maxWidth: '500px',
     textAlign: 'center',
   },
+
+  //title
   title: {
     marginBottom: '20px',
-    color: '#4b2e83',
+    color: '#11001C',
   },
+
+  //info box
   infoBox: {
     textAlign: 'left',
     marginBottom: '24px',
     padding: '16px',
-    backgroundColor: '#f3ecff',
+    backgroundColor: '#fcf1f5',
     borderRadius: '10px',
   },
   buttonGroup: {
@@ -114,21 +120,25 @@ const styles = {
     flexDirection: 'column',
     gap: '12px',
   },
+
+  //yarn stash/pattern button
   button: {
     padding: '12px',
     fontSize: '16px',
     border: 'none',
     borderRadius: '8px',
-    backgroundColor: '#7c5cff',
+    backgroundColor: '#11001C',
     color: 'white',
     cursor: 'pointer',
   },
+
+  //logout button
   logoutButton: {
     padding: '12px',
     fontSize: '16px',
     border: 'none',
     borderRadius: '8px',
-    backgroundColor: '#d9534f',
+    backgroundColor: '#905d5d',
     color: 'white',
     cursor: 'pointer',
   },

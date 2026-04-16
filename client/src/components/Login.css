@@ -1,0 +1,121 @@
+/* Full-page background area */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F5D7E3; /* light pink */
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* White login card */
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fcf1f5;
+  padding: 32px;
+  border-radius: 20px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+}
+
+/* Header section */
+.login-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* Main title */
+.login-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #11001C; 
+}
+
+/* Subtitle text */
+.login-subtitle {
+  margin-top: 10px;
+  color: #40006a;
+  font-size: 0.95rem;
+}
+
+/* Error box */
+.login-error {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  font-size: 0.9rem;
+}
+
+/* Form layout */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Input fields */
+.login-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Input focus state */
+.login-input:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.18);
+}
+
+/* Submit button */
+.login-button {
+  width: 100%;
+  background: #11001C;
+  color: white;
+  border: none;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+/* Hover effect */
+.login-button:hover {
+  background: #7e22ce;
+}
+
+/* Disabled state */
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Bottom text */
+.login-footer {
+  text-align: center;
+  margin-top: 22px;
+  color: #40006a;
+  font-size: 0.9rem;
+}
+
+/* Register link */
+.login-link {
+  color: #6cab80;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-link:hover {
+  text-decoration: underline;
+}
