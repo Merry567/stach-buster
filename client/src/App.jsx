@@ -4,6 +4,7 @@ import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Stash from './components/Stash';
 import Patterns from './components/Patterns';
+import AddYarn from './components/AddYarn';
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -26,14 +27,24 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/stash"
           element={
-           <ProtectedRoute>
-            <Stash />
-          </ProtectedRoute>
-        }
-      />
+            <ProtectedRoute>
+              <Stash />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/stash/new"
+          element={
+            <ProtectedRoute>
+              <AddYarn />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/patterns"
@@ -42,7 +53,7 @@ function App() {
               <Patterns />
             </ProtectedRoute>
           }
-      />
+        />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
