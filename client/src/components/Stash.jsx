@@ -11,6 +11,17 @@ const Stash = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const estimatedYardsPerGram = {
+    '0 - Lace': 6.75,
+    '1 - Super Fine': 4.2,
+    '2 - Fine': 3.3,
+    '3 - Light': 2.6,
+    '4 - Medium': 2.2,
+    '5 - Bulky': 1.45,
+    '6 - Super Bulky': 0.9,
+    '7 - Jumbo': 0.6,
+  };
+
   useEffect(() => {
     fetchStash();
   }, []);
@@ -58,6 +69,30 @@ const Stash = () => {
       console.error('Error deleting yarn:', err);
       setError('Could not delete yarn entry.');
     }
+  };
+
+  const getDisplayYardage = (item) => {
+    if (item.yardageSource === 'user' && item.yardage != null) {
+      return `${item.yardage} yd`;
+    }
+
+    if (item.estimatedYardage != null) {
+      return `${item.estimatedYardage} yd (estimated)`;
+    }
+
+    if (
+      item.yardage == null &&
+      item.grams != null &&
+      estimatedYardsPerGram[item.weight]
+    ) {
+      return `${Math.round(item.grams * estimatedYardsPerGram[item.weight])} yd (estimated)`;
+    }
+
+    if (item.yardage != null) {
+      return `${item.yardage} yd`;
+    }
+
+    return '—';
   };
 
   return (
@@ -124,7 +159,7 @@ const Stash = () => {
                     <p><strong>Fiber:</strong> {item.fiberContent}</p>
                     <p><strong>Weight:</strong> {item.weight}</p>
                     <p><strong>Grams:</strong> {item.grams}</p>
-                    <p><strong>Yardage:</strong> {item.yardage ?? '—'}</p>
+                    <p><strong>Yardage:</strong> {getDisplayYardage(item)}</p>
                     <p><strong>Quantity:</strong> {item.quantity}</p>
                     <p><strong>Dye Lot:</strong> {item.dyeLot || '—'}</p>
                     <p><strong>Notes:</strong> {item.notes || '—'}</p>

@@ -14,6 +14,17 @@ const weightOptions = [
   '7 - Jumbo',
 ];
 
+const estimatedYardsPerGram = {
+  '0 - Lace': 6.75,
+  '1 - Super Fine': 4.2,
+  '2 - Fine': 3.3,
+  '3 - Light': 2.6,
+  '4 - Medium': 2.2,
+  '5 - Bulky': 1.45,
+  '6 - Super Bulky': 0.9,
+  '7 - Jumbo': 0.6,
+};
+
 const emptyForm = {
   brand: '',
   fiberContent: '',
@@ -31,6 +42,13 @@ const AddYarn = () => {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const estimatedYardage =
+    form.yardage !== ''
+      ? Number(form.yardage)
+      : form.grams !== '' && estimatedYardsPerGram[form.weight]
+        ? Math.round(Number(form.grams) * estimatedYardsPerGram[form.weight])
+        : null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -166,6 +184,14 @@ const AddYarn = () => {
               style={styles.input}
             />
 
+            <p style={styles.helperText}>
+              {form.yardage !== ''
+                ? 'Using exact yardage entered by user.'
+                : estimatedYardage !== null
+                  ? `Estimated yardage: ${estimatedYardage} yd (approximate)`
+                  : 'Enter grams to see an estimated yardage.'}
+            </p>
+
             <input
               type="text"
               name="dyeLot"
@@ -246,6 +272,12 @@ const styles = {
   select: sharedStyles.select,
 
   textarea: sharedStyles.textarea,
+
+  helperText: {
+    margin: 0,
+    fontSize: '14px',
+    color: '#5f4b8b',
+  },
 
   buttonRow: sharedStyles.buttonRow,
 
