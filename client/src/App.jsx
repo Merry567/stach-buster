@@ -3,8 +3,9 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Stash from './components/Stash';
-import Patterns from './components/Patterns';
 import AddYarn from './components/AddYarn';
+import Patterns from './components/Patterns';
+import AddPattern from './components/AddPattern';
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -50,7 +51,25 @@ function App() {
           path="/patterns"
           element={
             <ProtectedRoute>
-              <Patterns />
+             <Patterns />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/patterns/new"
+          element={
+            <ProtectedRoute>
+              <AddPattern />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/patterns/edit/:id"
+          element={
+            <ProtectedRoute>
+              <AddPattern />
             </ProtectedRoute>
           }
         />

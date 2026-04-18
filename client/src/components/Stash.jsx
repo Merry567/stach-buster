@@ -1,28 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
+import { theme, sharedStyles } from '../styles/theme';
 
 const Stash = () => {
   const navigate = useNavigate();
 
-  // Stores all yarn entries from the backend
   const [stash, setStash] = useState([]);
-
-  // Search bar text
   const [search, setSearch] = useState('');
-
-  // Loading state while fetching the stash
   const [loading, setLoading] = useState(true);
-
-  // Error message for fetch/delete issues
   const [error, setError] = useState('');
 
-  // Load the stash when the page first opens
   useEffect(() => {
     fetchStash();
   }, []);
 
-  // Gets the current yarn stash from the API
   const fetchStash = async () => {
     try {
       setLoading(true);
@@ -37,7 +29,6 @@ const Stash = () => {
     }
   };
 
-  // Filters the stash based on the search box
   const filteredStash = useMemo(() => {
     const q = search.toLowerCase().trim();
     if (!q) return stash;
@@ -56,7 +47,6 @@ const Stash = () => {
     );
   }, [stash, search]);
 
-  // Deletes a yarn entry
   const handleDelete = async (id) => {
     const confirmed = window.confirm('Delete this yarn entry?');
     if (!confirmed) return;
@@ -78,6 +68,7 @@ const Stash = () => {
 
           <div style={styles.topButtonRow}>
             <button
+              type="button"
               style={styles.secondaryButton}
               onClick={() => navigate('/dashboard')}
             >
@@ -85,6 +76,7 @@ const Stash = () => {
             </button>
 
             <button
+              type="button"
               style={styles.primaryButton}
               onClick={() => navigate('/stash/new')}
             >
@@ -93,7 +85,7 @@ const Stash = () => {
           </div>
         </div>
 
-        {error && <p style={styles.error}>{error}</p>}
+        {error && <div style={styles.error}>{error}</div>}
 
         <div style={styles.card}>
           <div style={styles.listHeader}>
@@ -109,11 +101,12 @@ const Stash = () => {
           </div>
 
           {loading ? (
-            <p>Loading stash...</p>
+            <p style={styles.statusText}>Loading stash...</p>
           ) : filteredStash.length === 0 ? (
             <div style={styles.emptyState}>
               <p style={styles.emptyText}>No yarn entries found.</p>
               <button
+                type="button"
                 style={styles.primaryButton}
                 onClick={() => navigate('/stash/new')}
               >
@@ -139,6 +132,7 @@ const Stash = () => {
 
                   <div style={styles.itemButtons}>
                     <button
+                      type="button"
                       style={styles.editButton}
                       onClick={() => navigate(`/stash/edit/${item._id}`)}
                     >
@@ -146,6 +140,7 @@ const Stash = () => {
                     </button>
 
                     <button
+                      type="button"
                       style={styles.deleteButton}
                       onClick={() => handleDelete(item._id)}
                     >
@@ -163,136 +158,109 @@ const Stash = () => {
 };
 
 const styles = {
-  //background
-  page: {
-    minHeight: '100vh',
-    backgroundColor: '#F5D7E3',
-    padding: '24px',
-  },
-  container: {
-    maxWidth: '1000px',
-    margin: '0 auto',
-  },
-  topBar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '16px',
-    marginBottom: '24px',
-    flexWrap: 'wrap',
-  },
+  page: sharedStyles.page,
+
+  container: sharedStyles.container,
+
+  topBar: sharedStyles.topBar,
+
   topButtonRow: {
     display: 'flex',
-    gap: '12px',
+    gap: theme.spacing.sm,
     flexWrap: 'wrap',
   },
 
-  //title
-  title: {
-    margin: 0,
-    color: '#11001C',
+  title: sharedStyles.title,
+
+  card: {
+    ...sharedStyles.sectionCard,
+    marginBottom: theme.spacing.lg,
   },
 
-  //yarn card
-  card: {
-    backgroundColor: '#fcf1f5',
-    borderRadius: '14px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
-    padding: '24px',
-    marginBottom: '24px',
-  },
   sectionTitle: {
-    marginTop: 0,
-    color: '#40006a',
+    ...sharedStyles.sectionTitle,
+    marginBottom: 0,
   },
+
   listHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: '12px',
-    marginBottom: '16px',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
     flexWrap: 'wrap',
   },
+
   searchInput: {
-    padding: '10px 12px',
-    borderRadius: '8px',
-    border: '1px solid #fcf1f5',
+    ...sharedStyles.input,
     minWidth: '260px',
+    maxWidth: '360px',
   },
+
   list: {
     display: 'grid',
-    gap: '16px',
+    gap: theme.spacing.md,
   },
+
   itemCard: {
-    border: '1px solid #e3d8ff',
-    borderRadius: '12px',
-    padding: '16px',
+    ...sharedStyles.itemCard,
     display: 'flex',
     justifyContent: 'space-between',
-    gap: '16px',
+    gap: theme.spacing.md,
     flexWrap: 'wrap',
-    backgroundColor: '#faf8ff',
   },
+
   itemContent: {
     flex: 1,
     minWidth: '240px',
+    color: theme.colors.text,
   },
+
   itemTitle: {
     marginTop: 0,
     marginBottom: '10px',
-    color: '#4b2e83',
+    color: theme.colors.subtext,
+    fontSize: '1.15rem',
   },
+
   itemButtons: {
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
-    minWidth: '100px',
+    minWidth: '110px',
   },
-  primaryButton: {
-    padding: '12px 16px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#7c5cff',
-    color: '#fff',
-    cursor: 'pointer',
-    fontSize: '15px',
-  },
-  secondaryButton: {
-    padding: '10px 14px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#7c5cff',
-    color: '#fff',
-    cursor: 'pointer',
-  },
+
+  primaryButton: sharedStyles.primaryButton,
+
+  secondaryButton: sharedStyles.secondaryButton,
+
   editButton: {
-    padding: '10px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#5b8def',
-    color: '#fff',
-    cursor: 'pointer',
+    ...sharedStyles.secondaryButton,
+    width: '100%',
   },
+
   deleteButton: {
-    padding: '10px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#d9534f',
-    color: '#fff',
-    cursor: 'pointer',
+    ...sharedStyles.dangerButton,
+    width: '100%',
   },
+
   emptyState: {
     display: 'grid',
-    gap: '12px',
+    gap: theme.spacing.sm,
     justifyItems: 'start',
   },
+
   emptyText: {
     margin: 0,
+    color: theme.colors.subtext,
   },
-  error: {
-    color: '#b00020',
-    marginBottom: '16px',
+
+  statusText: {
+    margin: 0,
+    color: theme.colors.subtext,
   },
+
+  error: sharedStyles.errorBox,
 };
 
 export default Stash;

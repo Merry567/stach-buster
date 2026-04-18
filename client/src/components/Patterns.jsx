@@ -1,51 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
-
-const yarnWeightOptions = [
-  '0 - Lace',
-  '1 - Super Fine',
-  '2 - Fine',
-  '3 - Light',
-  '4 - Medium',
-  '5 - Bulky',
-  '6 - Super Bulky',
-  '7 - Jumbo',
-];
-
-const emptyMaterial = {
-  yarnWeight: '',
-  yardage: '',
-  quantity: '',
-};
-
-const emptyForm = {
-  name: '',
-  type: 'knit',
-  skillLevel: 'intermediate',
-  materials: [{ ...emptyMaterial }],
-  notes: '',
-  tags: '',
-  isPublic: false,
-  patternFile: null,
-};
-
-const typeOptions = ['knit', 'crochet', 'both'];
-const skillOptions = ['beginner', 'intermediate', 'advanced'];
+import { theme, sharedStyles } from '../styles/theme';
 
 const Patterns = () => {
   const navigate = useNavigate();
 
   const [patterns, setPatterns] = useState([]);
-  const [form, setForm] = useState(emptyForm);
-  const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-
-  const [matchResults, setMatchResults] = useState({});
   const [matchingId, setMatchingId] = useState(null);
+  const [matchResults, setMatchResults] = useState({});
 
   useEffect(() => {
     fetchPatterns();
@@ -75,104 +41,12 @@ const Patterns = () => {
         item.type,
         item.skillLevel,
         item.notes,
-        ...(Array.isArray(item.tags) ? item.tags : []),
-        ...(Array.isArray(item.materials)
-          ? item.materials.flatMap((mat) => [
-              mat?.yarnWeight,
-              mat?.yardage?.toString(),
-              mat?.quantity?.toString(),
-            ])
-          : []),
+        ...(item.tags || []),
       ]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(q))
     );
   }, [patterns, search]);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
-
-    setForm((prev) => ({
-      ...prev,
-      patternFile: file,
-    }));
-  };
-
-  const handleMaterialChange = (index, field, value) => {
-    setForm((prev) => {
-      const updatedMaterials = [...prev.materials];
-      updatedMaterials[index] = {
-        ...updatedMaterials[index],
-        [field]: value,
-      };
-
-      return {
-        ...prev,
-        materials: updatedMaterials,
-      };
-    });
-  };
-
-  const addMaterialRow = () => {
-    setForm((prev) => ({
-      ...prev,
-      materials: [...prev.materials, { ...emptyMaterial }],
-    }));
-  };
-
-  const removeMaterialRow = (index) => {
-    setForm((prev) => {
-      if (prev.materials.length === 1) {
-        return {
-          ...prev,
-          materials: [{ ...emptyMaterial }],
-        };
-      }
-
-      return {
-        ...prev,
-        materials: prev.materials.filter((_, i) => i !== index),
-      };
-    });
-  };
-
-  const resetForm = () => {
-    setForm(emptyForm);
-    setEditingId(null);
-  };
-
-  const handleEdit = (item) => {
-    setEditingId(item._id);
-
-    setForm({
-      name: item.name || '',
-      type: item.type || 'knit',
-      skillLevel: item.skillLevel || 'intermediate',
-      materials:
-        Array.isArray(item.materials) && item.materials.length > 0
-          ? item.materials.map((mat) => ({
-              yarnWeight: mat.yarnWeight || '',
-              yardage: mat.yardage ?? '',
-              quantity: mat.quantity ?? '',
-            }))
-          : [{ ...emptyMaterial }],
-      notes: item.notes || '',
-      tags: Array.isArray(item.tags) ? item.tags.join(', ') : '',
-      isPublic: item.isPublic || false,
-      patternFile: null,
-    });
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   const handleDelete = async (id) => {
     const confirmed = window.confirm('Delete this pattern?');
@@ -187,10 +61,6 @@ const Patterns = () => {
         delete updated[id];
         return updated;
       });
-
-      if (editingId === id) {
-        resetForm();
-      }
     } catch (err) {
       console.error('Error deleting pattern:', err);
       setError('Could not delete pattern.');
@@ -218,298 +88,49 @@ const Patterns = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setError('');
-
-    const cleanedMaterials = form.materials
-      .map((mat) => ({
-        yarnWeight: mat.yarnWeight.trim(),
-        yardage: mat.yardage === '' ? undefined : Number(mat.yardage),
-        quantity: mat.quantity === '' ? undefined : Number(mat.quantity),
-      }))
-      .filter(
-        (mat) =>
-          mat.yarnWeight ||
-          mat.yardage !== undefined ||
-          mat.quantity !== undefined
-      );
-
+  const handleViewPdf = async (fileId) => {
     try {
-      if (editingId) {
-       const formData = new FormData();
-       formData.append('name', form.name.trim());
-        formData.append('type', form.type);
-        formData.append('skillLevel', form.skillLevel);
-
-        formData.append('materials', JSON.stringify(cleanedMaterials));
-        formData.append('notes', form.notes.trim());
-        formData.append(
-          'tags',
-          JSON.stringify(
-            form.tags
-            .split(',')
-            .map((item) => item.trim())
-            .filter(Boolean)
-          )
-        );
-        
-        formData.append('isPublic', form.isPublic.toString());
-        
-        if (form.patternFile) {
-          formData.append('patternFile', form.patternFile);
-        }
-        
-        const response = await API.put(`/patterns/${editingId}`, formData);
-        
-        setPatterns((prev) =>
-          prev.map((item) => (item._id === editingId ? response.data : item))
-      );
-      
-      setMatchResults((prev) => {
-        const updated = { ...prev };
-        delete updated[editingId];
-        return updated;
+      const response = await API.get(`/patterns/file/${fileId}`, {
+        responseType: 'blob',
       });
-      } else {
-        const formData = new FormData();
-        formData.append('name', form.name.trim());
-        formData.append('type', form.type);
-        formData.append('skillLevel', form.skillLevel);
 
-        formData.append('materials', JSON.stringify(cleanedMaterials));
-        formData.append('notes', form.notes.trim());
-        formData.append(
-          'tags',
-          JSON.stringify(
-            form.tags
-              .split(',')
-              .map((item) => item.trim())
-              .filter(Boolean)
-          )
-        );
-        formData.append('isPublic', form.isPublic.toString());
-
-        if (form.patternFile) {
-          formData.append('patternFile', form.patternFile);
-        }
-
-        const response = await API.post('/patterns', formData);
-        setPatterns((prev) => [response.data, ...prev]);
-      }
-
-      resetForm();
-    } catch (err) {
-      console.error('Error saving pattern:', err);
-      setError(
-        err.response?.data?.error ||
-          err.response?.data?.message ||
-          'Could not save pattern.'
+      const fileURL = window.URL.createObjectURL(
+        new Blob([response.data], { type: 'application/pdf' })
       );
-    } finally {
-      setSaving(false);
+
+      window.open(fileURL, '_blank');
+    } catch (err) {
+      console.error('Error opening PDF:', err);
+      setError('Could not open PDF.');
     }
   };
-
-  const handleViewPdf = async (fileId) => {
-  try {
-    const response = await API.get(`/patterns/file/${fileId}`, {
-      responseType: 'blob',
-    });
-
-    const fileURL = window.URL.createObjectURL(
-      new Blob([response.data], { type: 'application/pdf' })
-    );
-
-    window.open(fileURL, '_blank');
-  } catch (err) {
-    console.error('Error opening PDF:', err);
-    setError('Could not open PDF.');
-  }
-};
 
   return (
     <div style={styles.page}>
       <div style={styles.container}>
         <div style={styles.topBar}>
           <h1 style={styles.title}>My Patterns</h1>
-          <button
-            type="button"
-            style={styles.secondaryButton}
-            onClick={() => navigate('/dashboard')}
-          >
-            Back to Dashboard
-          </button>
+
+          <div style={styles.topButtonRow}>
+            <button
+              type="button"
+              style={styles.secondaryButton}
+              onClick={() => navigate('/dashboard')}
+            >
+              Back to Dashboard
+            </button>
+
+            <button
+              type="button"
+              style={styles.primaryButton}
+              onClick={() => navigate('/patterns/new')}
+            >
+              Add Pattern
+            </button>
+          </div>
         </div>
 
-        {error && <p style={styles.error}>{error}</p>}
-
-        <div style={styles.card}>
-          <h2 style={styles.sectionTitle}>
-            {editingId ? 'Edit Pattern' : 'Add Pattern'}
-          </h2>
-
-          <form onSubmit={handleSubmit} style={styles.form}>
-            <input
-              type="text"
-              name="name"
-              placeholder="Pattern name"
-              value={form.name}
-              onChange={handleChange}
-              style={styles.input}
-              required
-            />
-
-            <select
-              name="type"
-              value={form.type}
-              onChange={handleChange}
-              style={styles.input}
-            >
-              {typeOptions.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-
-            <select
-              name="skillLevel"
-              value={form.skillLevel}
-              onChange={handleChange}
-              style={styles.input}
-            >
-              {skillOptions.map((level) => (
-                <option key={level} value={level}>
-                  {level}
-                </option>
-              ))}
-            </select>
-
-
-            <div>
-              <label style={styles.fileLabel}>Upload Pattern PDF</label>
-              <input
-                type="file"
-                accept="application/pdf"
-                onChange={handleFileChange}
-                style={styles.input}
-              />
-              {form.patternFile && (
-                <p style={styles.fileName}>Selected file: {form.patternFile.name}</p>
-              )}
-            </div>
-
-            <div style={styles.materialsBox}>
-              <h3 style={styles.subheading}>Materials Needed</h3>
-
-              {form.materials.map((material, index) => (
-                <div key={index} style={styles.materialCard}>
-                  <select
-                    value={material.yarnWeight}
-                    onChange={(e) =>
-                      handleMaterialChange(index, 'yarnWeight', e.target.value)
-                    }
-                    style={styles.input}
-                  >
-                    <option value="">Select Yarn Weight</option>
-                    {yarnWeightOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-
-                  <input
-                    type="number"
-                    placeholder="Yardage"
-                    value={material.yardage}
-                    onChange={(e) =>
-                      handleMaterialChange(index, 'yardage', e.target.value)
-                    }
-                    min="0"
-                    style={styles.input}
-                  />
-
-                  <input
-                    type="number"
-                    placeholder="Quantity"
-                    value={material.quantity}
-                    onChange={(e) =>
-                      handleMaterialChange(index, 'quantity', e.target.value)
-                    }
-                    min="0"
-                    style={styles.input}
-                  />
-
-                  <button
-                    type="button"
-                    style={styles.removeButton}
-                    onClick={() => removeMaterialRow(index)}
-                  >
-                    Remove Material
-                  </button>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                style={styles.addButton}
-                onClick={addMaterialRow}
-              >
-                Add Another Material
-              </button>
-            </div>
-
-            <textarea
-              name="notes"
-              placeholder="Notes"
-              value={form.notes}
-              onChange={handleChange}
-              style={styles.textarea}
-            />
-
-            <input
-              type="text"
-              name="tags"
-              placeholder="Tags (comma separated)"
-              value={form.tags}
-              onChange={handleChange}
-              style={styles.input}
-            />
-
-            <label style={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                name="isPublic"
-                checked={form.isPublic}
-                onChange={handleChange}
-              />
-              Make this pattern public
-            </label>
-
-            <div style={styles.buttonRow}>
-              <button type="submit" style={styles.primaryButton} disabled={saving}>
-                {saving
-                  ? 'Saving...'
-                  : editingId
-                  ? 'Update Pattern'
-                  : 'Add Pattern'}
-              </button>
-
-              {editingId && (
-                <button
-                  type="button"
-                  style={styles.cancelButton}
-                  onClick={resetForm}
-                >
-                  Cancel Edit
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
+        {error && <div style={styles.error}>{error}</div>}
 
         <div style={styles.card}>
           <div style={styles.listHeader}>
@@ -525,20 +146,41 @@ const Patterns = () => {
           </div>
 
           {loading ? (
-            <p>Loading patterns...</p>
+            <p style={styles.statusText}>Loading patterns...</p>
           ) : filteredPatterns.length === 0 ? (
-            <p>No patterns found.</p>
+            <div style={styles.emptyState}>
+              <p style={styles.emptyText}>No patterns found.</p>
+              <button
+                type="button"
+                style={styles.primaryButton}
+                onClick={() => navigate('/patterns/new')}
+              >
+                Add Your First Pattern
+              </button>
+            </div>
           ) : (
             <div style={styles.list}>
               {filteredPatterns.map((item) => (
                 <div key={item._id} style={styles.itemCard}>
                   <div style={styles.itemContent}>
                     <h3 style={styles.itemTitle}>{item.name}</h3>
-                    <p><strong>Type:</strong> {item.type || '—'}</p>
-                    <p><strong>Skill Level:</strong> {item.skillLevel || '—'}</p>
-                    <p><strong>Public:</strong> {item.isPublic ? 'Yes' : 'No'}</p>
-                    <p><strong>Tags:</strong> {item.tags?.length ? item.tags.join(', ') : '—'}</p>
-                    <p><strong>Notes:</strong> {item.notes || '—'}</p>
+
+                    <p>
+                      <strong>Type:</strong> {item.type || '—'}
+                    </p>
+                    <p>
+                      <strong>Skill Level:</strong> {item.skillLevel || '—'}
+                    </p>
+                    <p>
+                      <strong>Public:</strong> {item.isPublic ? 'Yes' : 'No'}
+                    </p>
+                    <p>
+                      <strong>Tags:</strong>{' '}
+                      {item.tags?.length ? item.tags.join(', ') : '—'}
+                    </p>
+                    <p>
+                      <strong>Notes:</strong> {item.notes || '—'}
+                    </p>
 
                     <div style={styles.materialDisplay}>
                       <strong>Materials:</strong>
@@ -546,8 +188,9 @@ const Patterns = () => {
                         <ul style={styles.materialList}>
                           {item.materials.map((mat, idx) => (
                             <li key={idx}>
-                              Weight: {mat.yarnWeight || '—'}, 
-                               Yardage: {mat.yardage ?? '—'}, Quantity: {mat.quantity ?? '—'}
+                              Weight: {mat.yarnWeight || '—'}, Yardage:{' '}
+                              {mat.yardage ?? '—'}, Quantity:{' '}
+                              {mat.quantity ?? '—'}
                             </li>
                           ))}
                         </ul>
@@ -555,19 +198,19 @@ const Patterns = () => {
                         <p style={styles.inlineText}>—</p>
                       )}
                     </div>
-                    
+
                     {item.patternFileId && (
                       <p style={styles.fileLinkRow}>
-                        <strong>Pattern PDF:</strong>{" "}
+                        <strong>Pattern PDF:</strong>{' '}
                         <button
-                        type="button"
-                        style={styles.linkButton}
-                        onClick={() => handleViewPdf(item.patternFileId)}
+                          type="button"
+                          style={styles.linkButton}
+                          onClick={() => handleViewPdf(item.patternFileId)}
                         >
-                          {item.patternFileName || "View PDF"}
-                          </button>
-                          </p>
-                        )}
+                          {item.patternFileName || 'View PDF'}
+                        </button>
+                      </p>
+                    )}
 
                     {matchResults[item._id] && (
                       <div style={styles.matchBox}>
@@ -577,23 +220,37 @@ const Patterns = () => {
                         </p>
 
                         {matchResults[item._id].materialMatches?.map((entry) => (
-                          <div key={entry.materialIndex} style={styles.matchSection}>
+                          <div
+                            key={entry.materialIndex}
+                            style={styles.matchSection}
+                          >
                             <p>
-                              <strong>Material {entry.materialIndex + 1}:</strong>{' '}
+                              <strong>
+                                Material {entry.materialIndex + 1}:
+                              </strong>{' '}
                               {entry.material?.yarnWeight || 'Any weight'} /{' '}
                               {entry.material?.yardage ?? 0} yards / Qty:{' '}
                               {entry.material?.quantity ?? '—'}
                             </p>
 
-                            <p><strong>Status:</strong> {entry.status}</p>
+                            <p>
+                              <strong>Status:</strong> {entry.status}
+                            </p>
 
                             {entry.matches?.length ? (
                               entry.matches.map((match) => (
-                                <div key={match.stashId} style={styles.matchItem}>
+                                <div
+                                  key={match.stashId}
+                                  style={styles.matchItem}
+                                >
                                   <p>
-                                    <strong>{match.brand}</strong> — {match.color}
+                                    <strong>{match.brand}</strong> —{' '}
+                                    {match.color}
                                   </p>
-                                  <p><strong>Weight:</strong> {match.weight || '—'}</p>
+                                  <p>
+                                    <strong>Weight:</strong>{' '}
+                                    {match.weight || '—'}
+                                  </p>
                                   <p>
                                     <strong>Available Yardage:</strong>{' '}
                                     {match.stashYardageTotal ?? '—'}
@@ -602,7 +259,9 @@ const Patterns = () => {
                                     <strong>Required Yardage:</strong>{' '}
                                     {match.requiredYardage ?? '—'}
                                   </p>
-                                  <p><strong>Score:</strong> {match.score ?? 0}</p>
+                                  <p>
+                                    <strong>Score:</strong> {match.score ?? 0}
+                                  </p>
                                   <p>
                                     <strong>Why:</strong>{' '}
                                     {match.reasons?.length
@@ -622,25 +281,29 @@ const Patterns = () => {
 
                   <div style={styles.itemButtons}>
                     <button
+                      type="button"
                       style={styles.secondaryButton}
                       onClick={() => handleFindMatches(item._id)}
                       disabled={matchingId === item._id}
                     >
-                      {matchingId === item._id ? 'Matching...' : 'Find Yarn Matches'}
+                      {matchingId === item._id
+                        ? 'Matching...'
+                        : 'Find Yarn Matches'}
                     </button>
 
                     <button
+                      type="button"
                       style={styles.editButton}
-                      onClick={() => handleEdit(item)}
+                      onClick={() => navigate(`/patterns/edit/${item._id}`)}
                     >
                       Edit
                     </button>
 
                     <button
+                      type="button"
                       style={styles.deleteButton}
                       onClick={() => handleDelete(item._id)}
                     >
-                      
                       Delete
                     </button>
                   </div>
@@ -655,247 +318,158 @@ const Patterns = () => {
 };
 
 const styles = {
-  page: {
-    minHeight: '100vh',
-    backgroundColor: '#f6f3ff',
-    padding: '24px',
-  },
-  container: {
-    maxWidth: '1000px',
-    margin: '0 auto',
-  },
-  topBar: {
+  page: sharedStyles.page,
+
+  container: sharedStyles.container,
+
+  topBar: sharedStyles.topBar,
+
+  topButtonRow: {
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '16px',
-    marginBottom: '24px',
+    gap: theme.spacing.sm,
     flexWrap: 'wrap',
   },
-  title: {
-    margin: 0,
-    color: '#4b2e83',
-  },
+
+  title: sharedStyles.title,
+
   card: {
-    backgroundColor: '#fff',
-    borderRadius: '14px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
-    padding: '24px',
-    marginBottom: '24px',
+    ...sharedStyles.sectionCard,
+    marginBottom: theme.spacing.lg,
   },
+
   sectionTitle: {
-    marginTop: 0,
-    color: '#4b2e83',
+    ...sharedStyles.sectionTitle,
+    marginBottom: 0,
   },
-  subheading: {
-    marginTop: 0,
-    marginBottom: '12px',
-    color: '#4b2e83',
-  },
-  form: {
-    display: 'grid',
-    gap: '12px',
-  },
-  input: {
-    padding: '12px',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
-    fontSize: '15px',
-    width: '100%',
-    boxSizing: 'border-box',
-  },
-  textarea: {
-    padding: '12px',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
-    fontSize: '15px',
-    minHeight: '90px',
-    resize: 'vertical',
-  },
-  checkboxLabel: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    fontSize: '15px',
-  },
-  fileLabel: {
-    display: 'block',
-    marginBottom: '8px',
-    fontWeight: '600',
-    color: '#4b2e83',
-  },
-  fileName: {
-    marginTop: '8px',
-    fontSize: '14px',
-    color: '#555',
-  },
-  fileLinkRow: {
-    marginTop: '12px',
-  },
-  materialsBox: {
-    border: '1px solid #ddd',
-    borderRadius: '10px',
-    padding: '16px',
-    backgroundColor: '#faf8ff',
-  },
-  materialCard: {
-    display: 'grid',
-    gap: '10px',
-    marginBottom: '14px',
-    padding: '14px',
-    border: '1px solid #e3d8ff',
-    borderRadius: '10px',
-    backgroundColor: '#fff',
-  },
-  addButton: {
-    padding: '10px 14px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#5b8def',
-    color: '#fff',
-    cursor: 'pointer',
-  },
-  removeButton: {
-    padding: '10px 14px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#d9534f',
-    color: '#fff',
-    cursor: 'pointer',
-  },
-  buttonRow: {
-    display: 'flex',
-    gap: '12px',
-    flexWrap: 'wrap',
-  },
-  primaryButton: {
-    padding: '12px 16px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#7c5cff',
-    color: '#fff',
-    cursor: 'pointer',
-    fontSize: '15px',
-  },
-  secondaryButton: {
-    padding: '10px 14px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#7c5cff',
-    color: '#fff',
-    cursor: 'pointer',
-  },
-  cancelButton: {
-    padding: '12px 16px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#888',
-    color: '#fff',
-    cursor: 'pointer',
-    fontSize: '15px',
-  },
+
   listHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: '12px',
-    marginBottom: '16px',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
     flexWrap: 'wrap',
   },
+
   searchInput: {
-    padding: '10px 12px',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
+    ...sharedStyles.input,
     minWidth: '260px',
+    maxWidth: '360px',
   },
+
   list: {
     display: 'grid',
-    gap: '16px',
+    gap: theme.spacing.md,
   },
+
   itemCard: {
-    border: '1px solid #e3d8ff',
-    borderRadius: '12px',
-    padding: '16px',
+    ...sharedStyles.itemCard,
     display: 'flex',
     justifyContent: 'space-between',
-    gap: '16px',
+    gap: theme.spacing.md,
     flexWrap: 'wrap',
-    backgroundColor: '#faf8ff',
   },
+
   itemContent: {
     flex: 1,
     minWidth: '260px',
+    color: theme.colors.text,
   },
+
   itemTitle: {
     marginTop: 0,
     marginBottom: '10px',
-    color: '#4b2e83',
+    color: theme.colors.subtext,
   },
+
   itemButtons: {
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
     minWidth: '150px',
   },
+
+  primaryButton: sharedStyles.primaryButton,
+
+  secondaryButton: sharedStyles.secondaryButton,
+
   editButton: {
-    padding: '10px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#5b8def',
-    color: '#fff',
-    cursor: 'pointer',
+    ...sharedStyles.secondaryButton,
+    width: '100%',
   },
+
   deleteButton: {
-    padding: '10px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#d9534f',
-    color: '#fff',
-    cursor: 'pointer',
+    ...sharedStyles.dangerButton,
+    width: '100%',
   },
+
   materialDisplay: {
     marginTop: '10px',
   },
+
   materialList: {
     marginTop: '8px',
     paddingLeft: '20px',
   },
+
   inlineText: {
     display: 'inline',
     marginLeft: '6px',
   },
+
+  fileLinkRow: {
+    marginTop: '12px',
+  },
+
   matchBox: {
     marginTop: '16px',
     padding: '16px',
-    borderRadius: '10px',
-    backgroundColor: '#f4f0ff',
-    border: '1px solid #ddd',
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.mutedBg,
+    border: `1px solid ${theme.colors.border}`,
   },
+
   matchSection: {
     marginTop: '12px',
     paddingTop: '12px',
-    borderTop: '1px solid #ddd',
+    borderTop: `1px solid ${theme.colors.border}`,
   },
+
   matchItem: {
     marginTop: '10px',
     padding: '10px',
-    borderRadius: '8px',
-    backgroundColor: '#fff',
-    border: '1px solid #e3d8ff',
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.white,
+    border: `1px solid ${theme.colors.border}`,
   },
-  error: {
-    color: '#b00020',
-    marginBottom: '16px',
+
+  emptyState: {
+    display: 'grid',
+    gap: theme.spacing.sm,
+    justifyItems: 'start',
   },
+
+  emptyText: {
+    margin: 0,
+    color: theme.colors.subtext,
+  },
+
+  statusText: {
+    margin: 0,
+    color: theme.colors.subtext,
+  },
+
+  error: sharedStyles.errorBox,
+
   linkButton: {
-  background: 'none',
-  border: 'none',
-  color: '#5b3cc4',
-  textDecoration: 'underline',
-  cursor: 'pointer',
-  padding: 0,
-  fontSize: '14px',
-},
+    background: 'none',
+    border: 'none',
+    color: theme.colors.subtext,
+    textDecoration: 'underline',
+    cursor: 'pointer',
+    padding: 0,
+    fontSize: '14px',
+  },
 };
 
 export default Patterns;

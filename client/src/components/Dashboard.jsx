@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
+import { theme, sharedStyles } from '../styles/theme';
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
@@ -40,37 +41,51 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div style={styles.page}>
+      <div style={styles.pageCentered}>
         <div style={styles.card}>
-          <h2>Loading dashboard...</h2>
+          <h2 style={styles.sectionTitle}>Loading dashboard...</h2>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={styles.page}>
+    <div style={styles.pageCentered}>
       <div style={styles.card}>
         <h1 style={styles.title}>Stash Buster</h1>
 
-        {error && <p style={styles.error}>{error}</p>}
+        {error && <div style={styles.error}>{error}</div>}
 
         {user && (
           <div style={styles.infoBox}>
-            <p><strong>Welcome</strong> {user.name || 'User'}</p>
+            <p style={styles.welcomeText}>
+              <strong>Welcome</strong> {user.name || 'User'}
+            </p>
           </div>
         )}
 
         <div style={styles.buttonGroup}>
-          <button style={styles.button} onClick={() => navigate('/stash')}>
+          <button
+            type="button"
+            style={styles.primaryButton}
+            onClick={() => navigate('/stash')}
+          >
             My Yarn Stash
           </button>
 
-          <button style={styles.button} onClick={() => navigate('/patterns')}>
+          <button
+            type="button"
+            style={styles.primaryButton}
+            onClick={() => navigate('/patterns')}
+          >
             My Patterns
           </button>
 
-          <button style={styles.logoutButton} onClick={handleLogout}>
+          <button
+            type="button"
+            style={styles.logoutButton}
+            onClick={handleLogout}
+          >
             Logout
           </button>
         </div>
@@ -80,72 +95,59 @@ const Dashboard = () => {
 };
 
 const styles = {
-  //background
-  page: {
-    minHeight: '100vh',
+  pageCentered: {
+    ...sharedStyles.page,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5D7E3',
-    padding: '20px',
   },
 
-  //box card
   card: {
-    backgroundColor: '#fcf1f5',
-    padding: '32px',
-    borderRadius: '14px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+    ...sharedStyles.card,
     width: '100%',
     maxWidth: '500px',
     textAlign: 'center',
   },
 
-  //title
   title: {
-    marginBottom: '20px',
-    color: '#11001C',
+    ...sharedStyles.title,
+    marginBottom: theme.spacing.lg,
   },
 
-  //info box
+  sectionTitle: sharedStyles.sectionTitle,
+
   infoBox: {
     textAlign: 'left',
-    marginBottom: '24px',
-    padding: '16px',
-    backgroundColor: '#fcf1f5',
-    borderRadius: '10px',
+    marginBottom: theme.spacing.lg,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.cardAltBg,
+    borderRadius: theme.radius.sm,
+    border: `1px solid ${theme.colors.border}`,
   },
+
+  welcomeText: {
+    margin: 0,
+    color: theme.colors.text,
+    fontSize: theme.fontSizes.body,
+  },
+
   buttonGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
+    gap: theme.spacing.sm,
   },
 
-  //yarn stash/pattern button
-  button: {
-    padding: '12px',
-    fontSize: '16px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#11001C',
-    color: 'white',
-    cursor: 'pointer',
+  primaryButton: {
+    ...sharedStyles.primaryButton,
+    width: '100%',
   },
 
-  //logout button
   logoutButton: {
-    padding: '12px',
-    fontSize: '16px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#905d5d',
-    color: 'white',
-    cursor: 'pointer',
+    ...sharedStyles.dangerButton,
+    width: '100%',
   },
-  error: {
-    color: 'red',
-    marginBottom: '16px',
-  },
+
+  error: sharedStyles.errorBox,
 };
 
 export default Dashboard;

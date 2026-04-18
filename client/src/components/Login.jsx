@@ -1,26 +1,20 @@
 import { useState } from 'react';
 import API from '../services/api';
 import { Link, useNavigate } from 'react-router-dom';
-import './Login.css';
+import { theme, sharedStyles } from '../styles/theme';
 
 const Login = () => {
-  // Stores the form inputs
   const [formData, setFormData] = useState({ email: '', password: '' });
-
-  // Stores any error message from login
   const [error, setError] = useState('');
-
-  // Tracks whether the form is currently submitting
   const [loading, setLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState('');
 
   const navigate = useNavigate();
 
-  // Updates the form fields as the user types
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Handles login form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -28,10 +22,7 @@ const Login = () => {
 
     try {
       const response = await API.post('/auth/login', formData);
-
-      // Save token for future authenticated requests
       localStorage.setItem('token', response.data.token);
-
       alert('Login successful!');
       navigate('/dashboard');
     } catch (err) {
@@ -41,25 +32,40 @@ const Login = () => {
     }
   };
 
+  const getInputStyle = (fieldName) => ({
+    ...sharedStyles.input,
+    borderColor:
+      focusedField === fieldName
+        ? theme.colors.focus
+        : theme.colors.inputBorder,
+    boxShadow:
+      focusedField === fieldName
+        ? '0 0 0 3px rgba(168, 85, 247, 0.18)'
+        : 'none',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+  });
+
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <div className="login-header">
-          <h1 className="login-title">Stash Buster</h1>
-          <p className="login-subtitle">Sign in to your yarn stash</p>
+    <div style={styles.pageCentered}>
+      <div style={styles.card}>
+        <div style={styles.header}>
+          <h1 style={styles.title}>Stash Buster</h1>
+          <p style={styles.subtitle}>Sign in to your yarn stash</p>
         </div>
 
-        {error && <div className="login-error">{error}</div>}
+        {error && <div style={styles.error}>{error}</div>}
 
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit} style={styles.form}>
           <input
             type="email"
             name="email"
             placeholder="Email address"
             value={formData.email}
             onChange={handleChange}
+            onFocus={() => setFocusedField('email')}
+            onBlur={() => setFocusedField('')}
             required
-            className="login-input"
+            style={getInputStyle('email')}
           />
 
           <input
@@ -68,28 +74,76 @@ const Login = () => {
             placeholder="Password"
             value={formData.password}
             onChange={handleChange}
+            onFocus={() => setFocusedField('password')}
+            onBlur={() => setFocusedField('')}
             required
-            className="login-input"
+            style={getInputStyle('password')}
           />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="login-button"
-          >
+          <button type="submit" disabled={loading} style={styles.button}>
             {loading ? 'Signing in...' : 'Login'}
           </button>
         </form>
 
-        <p className="login-footer">
+        <p style={styles.footer}>
           Don&apos;t have an account?{' '}
-          <Link to="/register" className="login-link">
+          <Link to="/register" style={styles.link}>
             Register
           </Link>
         </p>
       </div>
     </div>
   );
+};
+
+const styles = {
+  pageCentered: {
+    ...sharedStyles.page,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  card: {
+    ...sharedStyles.card,
+    width: '100%',
+    maxWidth: '420px',
+  },
+
+  header: {
+    textAlign: 'center',
+    marginBottom: '28px',
+  },
+
+  title: sharedStyles.title,
+
+  subtitle: sharedStyles.subtitle,
+
+  error: sharedStyles.errorBox,
+
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing.md,
+  },
+
+  button: {
+    ...sharedStyles.primaryButton,
+    width: '100%',
+  },
+
+  footer: {
+    textAlign: 'center',
+    marginTop: '22px',
+    color: theme.colors.subtext,
+    fontSize: theme.fontSizes.small,
+  },
+
+  link: {
+    color: theme.colors.secondary,
+    textDecoration: 'none',
+    fontWeight: 500,
+  },
 };
 
 export default Login;

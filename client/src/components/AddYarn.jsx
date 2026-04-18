@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
+import { theme, sharedStyles } from '../styles/theme';
 
 const weightOptions = [
   '0 - Lace',
@@ -13,7 +14,6 @@ const weightOptions = [
   '7 - Jumbo',
 ];
 
-// Default form values for a new yarn entry
 const emptyForm = {
   brand: '',
   fiberContent: '',
@@ -28,17 +28,10 @@ const emptyForm = {
 
 const AddYarn = () => {
   const navigate = useNavigate();
-
-  // Stores the form values
   const [form, setForm] = useState(emptyForm);
-
-  // Tracks whether the form is currently saving
   const [saving, setSaving] = useState(false);
-
-  // Stores API error messages
   const [error, setError] = useState('');
 
-  // Updates form state as the user types
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -48,12 +41,10 @@ const AddYarn = () => {
     }));
   };
 
-  // Resets the form back to blank/default values
   const resetForm = () => {
     setForm(emptyForm);
   };
 
-  // Sends the new yarn entry to the backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -73,8 +64,6 @@ const AddYarn = () => {
 
     try {
       await API.post('/stash', payload);
-
-      // After successful save, go back to the stash list page
       navigate('/stash');
     } catch (err) {
       console.error('Error saving yarn:', err);
@@ -96,6 +85,7 @@ const AddYarn = () => {
 
           <div style={styles.topButtonRow}>
             <button
+              type="button"
               style={styles.secondaryButton}
               onClick={() => navigate('/stash')}
             >
@@ -104,7 +94,7 @@ const AddYarn = () => {
           </div>
         </div>
 
-        {error && <p style={styles.error}>{error}</p>}
+        {error && <div style={styles.error}>{error}</div>}
 
         <div style={styles.card}>
           <h2 style={styles.sectionTitle}>New Yarn Entry</h2>
@@ -134,7 +124,7 @@ const AddYarn = () => {
               name="weight"
               value={form.weight}
               onChange={handleChange}
-              style={styles.input}
+              style={styles.select}
               required
             >
               {weightOptions.map((weight) => (
@@ -225,95 +215,50 @@ const AddYarn = () => {
 };
 
 const styles = {
-  page: {
-    minHeight: '100vh',
-    backgroundColor: '#f6f3ff',
-    padding: '24px',
-  },
+  page: sharedStyles.page,
+
   container: {
+    ...sharedStyles.container,
     maxWidth: '800px',
-    margin: '0 auto',
   },
-  topBar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '16px',
-    marginBottom: '24px',
-    flexWrap: 'wrap',
-  },
+
+  topBar: sharedStyles.topBar,
+
   topButtonRow: {
     display: 'flex',
-    gap: '12px',
+    gap: theme.spacing.sm,
     flexWrap: 'wrap',
   },
-  title: {
-    margin: 0,
-    color: '#4b2e83',
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: '14px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
-    padding: '24px',
-  },
-  sectionTitle: {
-    marginTop: 0,
-    color: '#4b2e83',
-  },
+
+  title: sharedStyles.title,
+
+  card: sharedStyles.card,
+
+  sectionTitle: sharedStyles.sectionTitle,
+
   form: {
     display: 'grid',
-    gap: '12px',
+    gap: theme.spacing.sm,
   },
-  input: {
-    padding: '12px',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
-    fontSize: '15px',
-  },
-  textarea: {
-    padding: '12px',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
-    fontSize: '15px',
-    minHeight: '90px',
-    resize: 'vertical',
-  },
-  buttonRow: {
-    display: 'flex',
-    gap: '12px',
-    flexWrap: 'wrap',
-  },
+
+  input: sharedStyles.input,
+
+  select: sharedStyles.select,
+
+  textarea: sharedStyles.textarea,
+
+  buttonRow: sharedStyles.buttonRow,
+
   primaryButton: {
-    padding: '12px 16px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#7c5cff',
-    color: '#fff',
-    cursor: 'pointer',
-    fontSize: '15px',
+    ...sharedStyles.primaryButton,
+    minWidth: '140px',
   },
-  secondaryButton: {
-    padding: '10px 14px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#7c5cff',
-    color: '#fff',
-    cursor: 'pointer',
-  },
-  cancelButton: {
-    padding: '12px 16px',
-    border: 'none',
-    borderRadius: '8px',
-    backgroundColor: '#888',
-    color: '#fff',
-    cursor: 'pointer',
-    fontSize: '15px',
-  },
-  error: {
-    color: '#b00020',
-    marginBottom: '16px',
-  },
+
+  secondaryButton: sharedStyles.secondaryButton,
+
+  cancelButton: sharedStyles.dangerButton,
+
+  error: sharedStyles.errorBox,
 };
 
 export default AddYarn;

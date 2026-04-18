@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import API from '../services/api';
+import { theme, sharedStyles } from '../styles/theme';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState('');
 
   const handleChange = (e) => {
     setFormData({
@@ -24,7 +26,7 @@ const Register = () => {
   };
 
   const validatePassword = (password) => {
-    return /^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password);
+    return /^(?=.*[A-Z])(?=.*\\d).{8,}$/.test(password);
   };
 
   const handleSubmit = async (e) => {
@@ -43,7 +45,9 @@ const Register = () => {
     }
 
     if (!validatePassword(formData.password)) {
-      setError('Password must be at least 8 characters and include one uppercase letter and one number');
+      setError(
+        'Password must be at least 8 characters and include one uppercase letter and one number'
+      );
       return;
     }
 
@@ -70,32 +74,40 @@ const Register = () => {
     }
   };
 
+  const getInputStyle = (fieldName) => ({
+    ...sharedStyles.input,
+    borderColor:
+      focusedField === fieldName
+        ? theme.colors.focus
+        : theme.colors.inputBorder,
+    boxShadow:
+      focusedField === fieldName
+        ? '0 0 0 3px rgba(168, 85, 247, 0.18)'
+        : 'none',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+  });
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-md bg-white shadow-md rounded-xl p-8">
-        <h1 className="text-3xl font-bold text-center mb-2">Stash Buster</h1>
-        <p className="text-center text-gray-600 mb-6">Create your account</p>
+    <div style={styles.pageCentered}>
+      <div style={styles.card}>
+        <div style={styles.header}>
+          <h1 style={styles.title}>Stash Buster</h1>
+          <p style={styles.subtitle}>Create your account</p>
+        </div>
 
-        {error && (
-          <div className="mb-4 rounded-md bg-red-100 text-red-700 px-4 py-2">
-            {error}
-          </div>
-        )}
+        {error && <div style={styles.error}>{error}</div>}
+        {success && <div style={styles.success}>{success}</div>}
 
-        {success && (
-          <div className="mb-4 rounded-md bg-green-100 text-green-700 px-4 py-2">
-            {success}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} style={styles.form}>
           <input
             type="text"
             name="name"
             placeholder="Name"
             value={formData.name}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-2"
+            onFocus={() => setFocusedField('name')}
+            onBlur={() => setFocusedField('')}
+            style={getInputStyle('name')}
           />
 
           <input
@@ -104,7 +116,9 @@ const Register = () => {
             placeholder="Email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-2"
+            onFocus={() => setFocusedField('email')}
+            onBlur={() => setFocusedField('')}
+            style={getInputStyle('email')}
           />
 
           <input
@@ -113,7 +127,9 @@ const Register = () => {
             placeholder="Password"
             value={formData.password}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-2"
+            onFocus={() => setFocusedField('password')}
+            onBlur={() => setFocusedField('')}
+            style={getInputStyle('password')}
           />
 
           <input
@@ -122,27 +138,84 @@ const Register = () => {
             placeholder="Confirm Password"
             value={formData.confirmPassword}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-2"
+            onFocus={() => setFocusedField('confirmPassword')}
+            onBlur={() => setFocusedField('')}
+            style={getInputStyle('confirmPassword')}
           />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700 disabled:opacity-50"
-          >
+          <button type="submit" disabled={loading} style={styles.button}>
             {loading ? 'Creating account...' : 'Register'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-600 mt-4">
+        <p style={styles.footer}>
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" style={styles.link}>
             Login
           </Link>
         </p>
       </div>
     </div>
   );
+};
+
+const styles = {
+  pageCentered: {
+    ...sharedStyles.page,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  card: {
+    ...sharedStyles.card,
+    width: '100%',
+    maxWidth: '420px',
+  },
+
+  header: {
+    textAlign: 'center',
+    marginBottom: '28px',
+  },
+
+  title: sharedStyles.title,
+
+  subtitle: sharedStyles.subtitle,
+
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing.md,
+  },
+
+  button: {
+    ...sharedStyles.primaryButton,
+    width: '100%',
+  },
+
+  error: sharedStyles.errorBox,
+
+  success: {
+    background: '#dcfce7',
+    color: '#166534',
+    padding: theme.spacing.sm,
+    borderRadius: theme.radius.sm,
+    marginBottom: '18px',
+    fontSize: theme.fontSizes.small,
+  },
+
+  footer: {
+    textAlign: 'center',
+    marginTop: '22px',
+    color: theme.colors.subtext,
+    fontSize: theme.fontSizes.small,
+  },
+
+  link: {
+    color: theme.colors.secondary,
+    textDecoration: 'none',
+    fontWeight: 500,
+  },
 };
 
 export default Register;
