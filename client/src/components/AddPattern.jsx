@@ -32,7 +32,7 @@ const emptyForm = {
   name: '',
   type: 'knit',
   skillLevel: 'intermediate',
-  materials: [{ yarnWeight: '', yardage: '', quantity: '' }],
+  materials: [{ name:'', yarnWeight: '', yardage: '', quantity: '' }],
   notes: '',
   tags: '',
   isPublic: false,
@@ -84,11 +84,12 @@ const AddPattern = () => {
         materials:
           pattern.materials?.length > 0
             ? pattern.materials.map((mat) => ({
+              name: mat.name || '',
                 yarnWeight: mat.yarnWeight || '',
                 yardage: mat.yardage ?? '',
                 quantity: mat.quantity ?? '',
               }))
-            : [{ yarnWeight: '', yardage: '', quantity: '' }],
+            : [{ name: '', yarnWeight: '', yardage: '', quantity: '' }],
         notes: pattern.notes || '',
         tags: pattern.tags?.join(', ') || '',
         isPublic: !!pattern.isPublic,
@@ -162,7 +163,7 @@ const AddPattern = () => {
       ...prev,
       materials: [
         ...prev.materials,
-        { yarnWeight: '', yardage: '', quantity: '' },
+        { name: '',  yarnWeight: '', yardage: '', quantity: '' },
       ],
     }));
   };
@@ -185,12 +186,14 @@ const AddPattern = () => {
 
     const cleanedMaterials = form.materials
       .map((mat) => ({
+        name: mat.name.trim(),
         yarnWeight: mat.yarnWeight.trim(),
         yardage: mat.yardage === '' ? undefined : Number(mat.yardage),
         quantity: mat.quantity === '' ? undefined : Number(mat.quantity),
       }))
       .filter(
         (mat) =>
+          mat.name ||
           mat.yarnWeight ||
           mat.yardage !== undefined ||
           mat.quantity !== undefined
@@ -330,6 +333,15 @@ const AddPattern = () => {
 
               {form.materials.map((material, index) => (
                 <div key={index} style={styles.materialCard}>
+                  <input
+                    type="text"
+                    placeholder="Material name (ex: body, sleeve, trim)"
+                    value={material.name}
+                    onChange={(e) =>
+                      handleMaterialChange(index, 'name', e.target.value)
+                    }
+                    style={styles.input}
+                  />
                   <select
                     value={material.yarnWeight}
                     onChange={(e) =>
@@ -345,6 +357,7 @@ const AddPattern = () => {
                         {option}
                       </option>
                     ))}
+                    
                   </select>
 
                   <input

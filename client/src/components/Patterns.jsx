@@ -125,6 +125,21 @@ const Patterns = () => {
       setError('Could not open PDF.');
     }
   };
+  const getSortedMatches = (patternId) => {
+    const result = matchResults[patternId];
+    if (!result?.materialMatches) return [];
+
+    return result.materialMatches
+      .flatMap((entry) =>
+        (entry.matches || []).map((match) => ({
+          ...match,
+          materialIndex: entry.materialIndex,
+          material: entry.material,
+          status: entry.status,
+        }))
+      )
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  };
 
   return (
     <div style={styles.page}>
@@ -171,7 +186,7 @@ const Patterns = () => {
             onClick={() => setActiveTag('')}
             style={{
               ...styles.tagChip,
-              ...API(activeTag === '' ? styles.activeTagChip : {}),
+              ...(activeTag === '' ? styles.activeTagChip : {}),
             }}
           >
             All
@@ -183,7 +198,7 @@ const Patterns = () => {
               onClick={() => setActiveTag(tag)}
               style={{
                 ...styles.tagChip,
-                ...API(activeTag === tag ? styles.activeTagChip : {}),
+                ...(activeTag === tag ? styles.activeTagChip : {}),
               }}
               >
                 {tag}
@@ -234,9 +249,8 @@ const Patterns = () => {
                         <ul style={styles.materialList}>
                           {item.materials.map((mat, idx) => (
                             <li key={idx}>
-                              Weight: {mat.yarnWeight || '—'}, Yardage:{' '}
-                              {mat.yardage ?? '—'}, Quantity:{' '}
-                              {mat.quantity ?? '—'}
+                              {mat.name ? `${mat.name} — ` : ''}
+                              Weight: {mat.yarnWeight || '—'}, Yardage: {mat.yardage ?? '—'}, Quantity: {mat.quantity ?? '—'}
                             </li>
                           ))}
                         </ul>
@@ -261,66 +275,47 @@ const Patterns = () => {
                     {matchResults[item._id] && (
                       <div style={styles.matchBox}>
                         <p>
-                          <strong>Overall Match:</strong>{' '}
-                          {matchResults[item._id].overallStatus}
+                          <strong>Overall Match:</strong> {matchResults[item._id].overallStatus}
                         </p>
 
-                        {matchResults[item._id].materialMatches?.map((entry) => (
-                          <div
-                            key={entry.materialIndex}
-                            style={styles.matchSection}
-                          >
-                            <p>
-                              <strong>
-                                Material {entry.materialIndex + 1}:
-                              </strong>{' '}
-                              {entry.material?.yarnWeight || 'Any weight'} /{' '}
-                              {entry.material?.yardage ?? 0} yards / Qty:{' '}
-                              {entry.material?.quantity ?? '—'}
-                            </p>
+                        {getSortedMatches(item._id).length ? (
+                          getSortedMatches(item._id).map((match, index) => (
+                            <div key={`${match.stashId}-${index}`} style={styles.matchItem}>
+                              <p>
+                                <strong>
+                                  {match.material?.name || `Material ${match.materialIndex + 1}`}:
+                                </strong>
+                              </p>
 
-                            <p>
-                              <strong>Status:</strong> {entry.status}
-                            </p>
+                              <p>
+                                <strong>Required Weight:</strong> {match.material?.yarnWeight || '—'}
+                              </p>
 
-                            {entry.matches?.length ? (
-                              entry.matches.map((match) => (
-                                <div
-                                  key={match.stashId}
-                                  style={styles.matchItem}
-                                >
-                                  <p>
-                                    <strong>{match.brand}</strong> —{' '}
-                                    {match.color}
-                                  </p>
-                                  <p>
-                                    <strong>Weight:</strong>{' '}
-                                    {match.weight || '—'}
-                                  </p>
-                                  <p>
-                                    <strong>Available Yardage:</strong>{' '}
-                                    {match.stashYardageTotal ?? '—'}
-                                  </p>
-                                  <p>
-                                    <strong>Required Yardage:</strong>{' '}
-                                    {match.requiredYardage ?? '—'}
-                                  </p>
-                                  <p>
-                                    <strong>Score:</strong> {match.score ?? 0}
-                                  </p>
-                                  <p>
-                                    <strong>Why:</strong>{' '}
-                                    {match.reasons?.length
-                                      ? match.reasons.join(', ')
-                                      : 'No details'}
-                                  </p>
-                                </div>
-                              ))
-                            ) : (
-                              <p>No stash yarn matched this material.</p>
-                            )}
-                          </div>
-                        ))}
+                              <p>
+                                <strong>Required Yardage:</strong> {match.requiredYardage ?? '—'}
+                              </p>
+
+                              <p>
+                                <strong>Matched Yarn:</strong> {match.brand} — {match.color}
+                              </p>
+
+                              <p>
+                                <strong>Available Yardage:</strong> {match.stashYardageTotal ?? '—'}
+                              </p>
+
+                              <p>
+                                <strong>Score:</strong> {match.score ?? 0}
+                              </p>
+
+                              <p>
+                                <strong>Why:</strong>{' '}
+                                {match.reasons?.length ? match.reasons.join(', ') : 'No details'}
+                              </p>
+                            </div>
+                          ))
+                        ) : (
+                          <p>No stash yarn matched this pattern.</p>
+                        )}
                       </div>
                     )}
                   </div>
