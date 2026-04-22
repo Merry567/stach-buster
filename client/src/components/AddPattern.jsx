@@ -5,6 +5,7 @@ import { theme, sharedStyles } from '../styles/theme';
 
 const typeOptions = ['knit', 'crochet', 'both'];
 const skillOptions = ['beginner', 'intermediate', 'advanced'];
+
 const yarnWeightOptions = [
   'lace',
   'fingering',
@@ -15,6 +16,16 @@ const yarnWeightOptions = [
   'bulky',
   'super-bulky',
   'other',
+];
+
+const presetTags = [
+  'clothing',
+  'decoration',
+  'gloves',
+  'hat',
+  'sweater',
+  'cardigan',
+  'color block',
 ];
 
 const emptyForm = {
@@ -32,7 +43,7 @@ const AddPattern = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const editing = Boolean(id);
-
+//use state
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(editing);
   const [saving, setSaving] = useState(false);
@@ -118,6 +129,30 @@ const AddPattern = () => {
       return {
         ...prev,
         materials: updatedMaterials,
+      };
+    });
+  };
+
+  const togglePresetTag = (tag) => {
+    setForm((prev) => {
+      const currentTags = prev.tags
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      const hasTag = currentTags.some(
+        (item) => item.toLowerCase() === tag.toLowerCase()
+      );
+
+      const updatedTags = hasTag
+        ? currentTags.filter(
+            (item) => item.toLowerCase() !== tag.toLowerCase()
+          )
+        : [...currentTags, tag];
+
+      return {
+        ...prev,
+        tags: updatedTags.join(', '),
       };
     });
   };
@@ -369,6 +404,28 @@ const AddPattern = () => {
               onChange={handleChange}
               style={styles.input}
             />
+            <div style={styles.tagFilterRow}>
+              {presetTags.map((tag) => {
+                const selected = form.tags
+                  .split(',')
+                  .map((item) => item.trim().toLowerCase())
+                  .includes(tag.toLowerCase());
+
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => togglePresetTag(tag)}
+                    style={{
+                      ...styles.tagChip,
+                      ...(selected ? styles.activeTagChip : {}),
+                    }}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
 
             <label style={styles.checkboxLabel}>
               <input
@@ -493,6 +550,27 @@ const styles = {
   statusText: {
     margin: 0,
     color: theme.colors.subtext,
+  },
+  tagFilterRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+  },
+
+  tagChip: {
+    padding: '8px 12px',
+    borderRadius: '999px',
+    border: `1px solid ${theme.colors.border}`,
+    backgroundColor: theme.colors.white,
+    color: theme.colors.subtext,
+    cursor: 'pointer',
+    fontSize: '14px',
+  },
+
+  activeTagChip: {
+    backgroundColor: theme.colors.subtext,
+    color: theme.colors.white,
+    border: `1px solid ${theme.colors.subtext}`,
   },
 };
 

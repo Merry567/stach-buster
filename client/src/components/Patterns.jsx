@@ -3,11 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
 import { theme, sharedStyles } from '../styles/theme';
 
+const presetTags = [
+  'clothing',
+  'decoration',
+  'gloves',
+  'hat',
+  'sweater',
+  'cardigan',
+  'color block',
+];
+
 const Patterns = () => {
   const navigate = useNavigate();
 
+  //use state
   const [patterns, setPatterns] = useState([]);
   const [search, setSearch] = useState('');
+  const [activeTag, setActiveTag] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [matchingId, setMatchingId] = useState(null);
@@ -33,20 +45,29 @@ const Patterns = () => {
 
   const filteredPatterns = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return patterns;
 
-    return patterns.filter((item) =>
-      [
-        item.name,
-        item.type,
-        item.skillLevel,
-        item.notes,
-        ...(item.tags || []),
-      ]
-        .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(q))
-    );
-  }, [patterns, search]);
+    return patterns.filter((item) => {
+      const matchesSearch =
+        !q ||
+        [
+          item.name,
+          item.type,
+          item.skillLevel,
+          item.notes,
+          ...(item.tags || []),
+        ]
+          .filter(Boolean)
+          .some((value) => value.toLowerCase().includes(q));
+
+      const matchesTag =
+        !activeTag ||
+        (item.tags || []).some(
+          (tag) => tag.toLowerCase() === activeTag.toLowerCase()
+        );
+
+      return matchesSearch && matchesTag;
+    });
+  }, [patterns, search, activeTag]);
 
   const handleDelete = async (id) => {
     const confirmed = window.confirm('Delete this pattern?');
@@ -143,6 +164,31 @@ const Patterns = () => {
               onChange={(e) => setSearch(e.target.value)}
               style={styles.searchInput}
             />
+          </div>
+          <div style={styles.tagFilterRow}>
+            <button
+            type="button"
+            onClick={() => setActiveTag('')}
+            style={{
+              ...styles.tagChip,
+              ...API(activeTag === '' ? styles.activeTagChip : {}),
+            }}
+          >
+            All
+          </button>
+          {presetTags.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => setActiveTag(tag)}
+              style={{
+                ...styles.tagChip,
+                ...API(activeTag === tag ? styles.activeTagChip : {}),
+              }}
+              >
+                {tag}
+              </button>
+          ))}            
           </div>
 
           {loading ? (
@@ -469,6 +515,29 @@ const styles = {
     cursor: 'pointer',
     padding: 0,
     fontSize: '14px',
+  },
+  
+  tagFilterRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+    marginBottom: theme.spacing.md,
+},
+
+  tagChip: {
+    padding: '8px 12px',
+    borderRadius: '999px',
+    border: `1px solid ${theme.colors.border}`,
+    backgroundColor: theme.colors.white,
+    color: theme.colors.subtext,
+    cursor: 'pointer',
+    fontSize: '14px',
+  },
+
+  activeTagChip: {
+    backgroundColor: theme.colors.subtext,
+    color: theme.colors.white,
+    border: `1px solid ${theme.colors.subtext}`,
   },
 };
 
