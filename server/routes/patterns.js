@@ -149,10 +149,6 @@ function parseIncomingPatternFields(req) {
     req.body.tags = JSON.parse(req.body.tags);
   }
 
-  if (req.body.isPublic !== undefined) {
-    req.body.isPublic =
-      req.body.isPublic === "true" || req.body.isPublic === true;
-  }
 
   if (req.body.estTime !== undefined && req.body.estTime !== "") {
     req.body.estTime = Number(req.body.estTime);
