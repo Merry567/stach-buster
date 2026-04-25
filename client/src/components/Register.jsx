@@ -26,7 +26,7 @@ const Register = () => {
   };
 
   const validatePassword = (password) => {
-    return /^(?=.*[A-Z])(?=.*\\d).{8,}$/.test(password);
+    return /^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password);
   };
 
   const handleSubmit = async (e) => {
