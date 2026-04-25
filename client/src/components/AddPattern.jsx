@@ -26,6 +26,8 @@ const presetTags = [
   'sweater',
   'cardigan',
   'color block',
+  'knit',
+  'crochet'
 ];
 
 const emptyForm = {

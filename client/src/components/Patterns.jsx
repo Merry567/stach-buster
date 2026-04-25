@@ -11,6 +11,8 @@ const presetTags = [
   'sweater',
   'cardigan',
   'color block',
+  'Knit',
+  'crochet'
 ];
 
 const Patterns = () => {
@@ -232,7 +234,7 @@ const Patterns = () => {
                     <p>
                       <strong>Skill Level:</strong> {item.skillLevel || '—'}
                     </p>
-                    
+
                     <p>
                       <strong>Tags:</strong>{' '}
                       {item.tags?.length ? item.tags.join(', ') : '—'}
