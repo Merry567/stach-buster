@@ -16,7 +16,10 @@ app.use(cors({
   origin: [
     "http://localhost:5173",
     "https://stash-buster.vercel.app/",
+    "https://stash-buster-fslc0whw3-meredith-wonsons-projects.vercel.app/",
   ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
 app.use(express.json());
