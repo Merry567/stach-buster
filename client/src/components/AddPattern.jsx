@@ -35,7 +35,6 @@ const emptyForm = {
   materials: [{ name:'', yarnWeight: '', yardage: '', quantity: '' }],
   notes: '',
   tags: '',
-  isPublic: false,
   patternFile: null,
 };
 
@@ -92,7 +91,6 @@ const AddPattern = () => {
             : [{ name: '', yarnWeight: '', yardage: '', quantity: '' }],
         notes: pattern.notes || '',
         tags: pattern.tags?.join(', ') || '',
-        isPublic: !!pattern.isPublic,
         patternFile: null,
       });
     } catch (err) {
@@ -215,7 +213,6 @@ const AddPattern = () => {
             .filter(Boolean)
         )
       );
-      formData.append('isPublic', form.isPublic.toString());
 
       if (form.patternFile) {
         formData.append('patternFile', form.patternFile);
@@ -440,15 +437,6 @@ const AddPattern = () => {
               })}
             </div>
 
-            <label style={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                name="isPublic"
-                checked={form.isPublic}
-                onChange={handleChange}
-              />
-              Make this pattern public
-            </label>
 
             <div style={styles.buttonRow}>
               <button

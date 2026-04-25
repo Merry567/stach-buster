@@ -90,10 +90,6 @@ const patternSchema = new mongoose.Schema(
 
     tags: [String],
 
-    isPublic: {
-      type: Boolean,
-      default: false,
-    },
   },
   { timestamps: true }
 );

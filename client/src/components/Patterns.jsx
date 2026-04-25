@@ -232,9 +232,7 @@ const Patterns = () => {
                     <p>
                       <strong>Skill Level:</strong> {item.skillLevel || '—'}
                     </p>
-                    <p>
-                      <strong>Public:</strong> {item.isPublic ? 'Yes' : 'No'}
-                    </p>
+                    
                     <p>
                       <strong>Tags:</strong>{' '}
                       {item.tags?.length ? item.tags.join(', ') : '—'}
