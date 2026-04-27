@@ -46,6 +46,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/stash/edit/:id"
+          element={
+            <ProtectedRoute>
+              <AddYarn />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/patterns"
